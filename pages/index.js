@@ -72,6 +72,7 @@ export default function Home() {
         <span className="classified-badge">TOP SECRET</span>
         <div className="nexus-logo">CODE HEIST</div>
         <div className="logo-sub">INHERIT THE CLUES, OVERRIDE THE COMPETITION</div>
+        <div className="brand-tag">Vigyan.IO / AlgoSphere</div>
         <div className="land-line" />
 
         <div className="film-intro-wrapper">
