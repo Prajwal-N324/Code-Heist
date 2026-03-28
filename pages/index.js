@@ -96,7 +96,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="level-grid">
+        <div className="rounds-grid">
           {LEVEL_OVERVIEW.map((level) => (
             <div key={level.code} className="lv-pill">
               <div className="lv-pill-icon">
@@ -108,6 +108,16 @@ export default function Home() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="rules-section">
+          <div className="rules-title">RULES OF ENGAGEMENT</div>
+          <ul className="rules-list">
+            <li>Trace the code logic to unlock the digital fragment.</li>
+            <li>Campus locations remain encrypted until the fragment is secured.</li>
+            <li>Physical verification at the revealed location is required for the next round.</li>
+            <li>Use the heistadmin bypass only if authorized by AlgoSphere staff.</li>
+          </ul>
         </div>
 
         <button className="start-btn" onClick={handleGuestStart}>
