@@ -47,9 +47,10 @@ export default function Leaderboard() {
     let mounted = true
 
     async function loadTeams() {
+      // FIX: Changed 'code' to 'access_code' and 'name' to 'team_name'
       const { data, error } = await supabase
         .from('teams')
-        .select('id,code,name,score,question_set_id')
+        .select('id, access_code, team_name, score, current_round')
         .order('score', { ascending: false })
 
       if (error) {
@@ -170,30 +171,33 @@ export default function Leaderboard() {
     setIsRegistering(true)
     setRegistrationStatus('Checking team availability...')
 
-    const [{ data: duplicateName, error: duplicateNameError }, { data: duplicateTeam, error: duplicateTeamError }] = await Promise.all([
-      supabase.from('teams').select('id').eq('team_name', teamName).maybeSingle(),
-      supabase.from('teams').select('id').eq('name', teamName).maybeSingle()
-    ])
+    // FIX: Optimized check to only use 'team_name' column
+    const { data: duplicateTeam, error: checkError } = await supabase
+      .from('teams')
+      .select('id')
+      .eq('team_name', teamName)
+      .maybeSingle()
 
-    if (duplicateNameError || duplicateTeamError) {
+    if (checkError) {
       setRegistrationStatus('Unable to verify team name.')
       setIsRegistering(false)
       return
     }
 
-    if (duplicateName || duplicateTeam) {
-      setRegistrationStatus('A team with that name already exists. Use a different name.')
+    if (duplicateTeam) {
+      setRegistrationStatus('A team with that name already exists.')
       setIsRegistering(false)
       return
     }
 
     const accessCode = generateHeistCode(teamName)
+    
+    // FIX: Payload strictly matches your Supabase schema: 'team_name' and 'access_code'
     const payload = {
       team_name: teamName,
       access_code: accessCode,
-      name: teamName,
-      code: accessCode,
-      current_round: 1
+      current_round: 1,
+      score: 0
     }
 
     const { error: insertError } = await supabase.from('teams').insert(payload)
@@ -204,7 +208,7 @@ export default function Leaderboard() {
     }
 
     setGeneratedAccessCode(accessCode)
-    setRegistrationStatus('Team registered successfully. Access key ready.')
+    setRegistrationStatus('Team registered successfully.')
     setShowAccessModal(true)
     setNewTeamName('')
     setIsRegistering(false)
@@ -311,44 +315,44 @@ export default function Leaderboard() {
       {activeTab === 'leaderboard' && (
         <section className="terminal-panel god-view">
           <div className="terminal-header">
-          <div>
-            <span className="terminal-tag">GOD VIEW</span>
-            <h1>OVERWATCH COMMAND CENTER</h1>
+            <div>
+              <span className="terminal-tag">GOD VIEW</span>
+              <h1>OVERWATCH COMMAND CENTER</h1>
+            </div>
+            <div className="status-pill">Super-Admin</div>
           </div>
-          <div className="status-pill">Super-Admin</div>
-        </div>
 
-        <p className="terminal-copy">
-          Live scoreboard for organizers only. Team rankings stream in from Supabase in real time, powered by the teams feed.
-        </p>
+          <p className="terminal-copy">
+            Live scoreboard for organizers only. Team rankings stream in from Supabase in real time.
+          </p>
 
-        {error && <div className="error-banner">{error}</div>}
+          {error && <div className="error-banner">{error}</div>}
 
-        <div className="table-wrap neon-glow">
-          <table className="leaderboard-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Team Code</th>
-                <th>Name</th>
-                <th>Set</th>
-                <th>Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teams.map((team, index) => (
-                <tr key={team.id || `${team.code}-${index}`}>
-                  <td>{index + 1}</td>
-                  <td>{team.code}</td>
-                  <td>{team.name || 'Unknown'}</td>
-                  <td>{team.question_set_id || 'N/A'}</td>
-                  <td>{team.score ?? 0}</td>
+          <div className="table-wrap neon-glow">
+            <table className="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Access Code</th>
+                  <th>Team Name</th>
+                  <th>Current Round</th>
+                  <th>Score</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {teams.map((team, index) => (
+                  <tr key={team.id || `${team.access_code}-${index}`}>
+                    <td>{index + 1}</td>
+                    <td>{team.access_code}</td>
+                    <td>{team.team_name || 'Unknown'}</td>
+                    <td>{team.current_round || 1}</td>
+                    <td>{team.score ?? 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {activeTab === 'config' && (
@@ -362,7 +366,7 @@ export default function Leaderboard() {
           </div>
 
           <p className="terminal-copy">
-            Add or edit rounds for each hackathon set. Choose the active set to control which rounds are live in the player.
+            Add or edit rounds for each hackathon set.
           </p>
 
           <div className="config-row">
@@ -541,21 +545,17 @@ export default function Leaderboard() {
                   <th>Set</th>
                   <th>Round</th>
                   <th>Title</th>
-                  <th>Code snippet</th>
                   <th>Answer</th>
-                  <th>Hint Text</th>
                   <th>Location Reveal</th>
                 </tr>
               </thead>
               <tbody>
                 {roundConfig.map((round) => (
-                  <tr key={round.id} onClick={() => openRoundEditor(round)}>
+                  <tr key={round.id} onClick={() => openRoundEditor(round)} style={{cursor: 'pointer'}}>
                     <td>{round.set_id || 'N/A'}</td>
                     <td>{round.round_number}</td>
                     <td>{round.mission_title || '—'}</td>
-                    <td>{round.code_snippet ? `${round.code_snippet.slice(0, 80)}${round.code_snippet.length > 80 ? '…' : ''}` : '—'}</td>
-                    <td>{round.correct_answer ? `${round.correct_answer.slice(0, 80)}${round.correct_answer.length > 80 ? '…' : ''}` : '—'}</td>
-                    <td>{round.hint_text ? `${round.hint_text.slice(0, 80)}${round.hint_text.length > 80 ? '…' : ''}` : '—'}</td>
+                    <td>{round.correct_answer ? `${round.correct_answer.slice(0, 30)}...` : '—'}</td>
                     <td>{round.location_reveal || round.campus_location || '—'}</td>
                   </tr>
                 ))}
@@ -604,7 +604,7 @@ export default function Leaderboard() {
 
         .config-row {
           display: grid;
-          grid-template-columns: repeat(2, minmax(280px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
           gap: 24px;
           margin-top: 24px;
         }
@@ -685,7 +685,7 @@ export default function Leaderboard() {
         .modal-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(0, 0, 0, 0.75);
+          background: rgba(0, 0, 0, 0.85);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -697,8 +697,8 @@ export default function Leaderboard() {
           max-width: 480px;
           width: 100%;
           padding: 28px;
-          background: rgba(2, 7, 13, 0.98);
-          border: 1px solid rgba(0, 230, 118, 0.18);
+          background: #0d1117;
+          border: 1px solid rgba(0, 230, 118, 0.3);
           border-radius: 24px;
           box-shadow: 0 0 80px rgba(0, 230, 118, 0.15);
         }
@@ -737,7 +737,6 @@ export default function Leaderboard() {
 
         .btn-secondary:hover {
           background: rgba(255, 255, 255, 0.12);
-          border-color: rgba(255, 255, 255, 0.22);
         }
 
         .btn-primary {
@@ -755,31 +754,10 @@ export default function Leaderboard() {
         }
 
         .terminal-panel {
-          font-size: 0.75rem;
-          letter-spacing: 1.5px;
-          text-transform: uppercase;
-          color: #9bb3c1;
-          margin-bottom: 10px;
-          display: block;
-        }
-
-        .access-key {
-          font-family: var(--mono);
-          font-size: 1rem;
-          letter-spacing: 0.16em;
-          padding: 14px 16px;
-          background: rgba(0, 0, 0, 0.16);
-          border-radius: 16px;
-          color: #ffffff;
-          margin-bottom: 12px;
-          word-break: break-all;
-        }
-
-        .terminal-panel {
           background: rgba(4, 6, 10, 0.96);
           border: 1px solid rgba(255, 82, 82, 0.35);
           border-radius: 28px;
-          box-shadow: 0 0 120px rgba(255, 82, 82, 0.12), 0 0 48px rgba(0, 230, 118, 0.12);
+          box-shadow: 0 0 120px rgba(255, 82, 82, 0.12);
           color: #d9e3ea;
           padding: 32px;
           max-width: 1180px;
@@ -799,7 +777,6 @@ export default function Leaderboard() {
         .terminal-tag {
           display: inline-flex;
           align-items: center;
-          justify-content: center;
           padding: 10px 14px;
           border-radius: 999px;
           background: rgba(255, 82, 82, 0.15);
@@ -812,11 +789,10 @@ export default function Leaderboard() {
 
         .terminal-header h1 {
           font-family: var(--head);
-          font-size: clamp(28px, 4vw, 42px);
+          font-size: clamp(24px, 4vw, 36px);
           margin: 0;
           color: #ffffff;
           letter-spacing: 2px;
-          text-shadow: 0 0 28px rgba(255, 82, 82, 0.28);
         }
 
         .status-pill {
@@ -825,13 +801,12 @@ export default function Leaderboard() {
           letter-spacing: 2px;
           padding: 12px 18px;
           border-radius: 999px;
-          background: linear-gradient(135deg, rgba(255, 82, 82, 0.2), rgba(179, 136, 255, 0.18));
+          background: rgba(255, 82, 82, 0.1);
           color: #ffffff;
           border: 1px solid rgba(255, 82, 82, 0.35);
         }
 
         .terminal-copy {
-          font-family: var(--ui);
           color: #9bb3c1;
           max-width: 860px;
           line-height: 1.9;
@@ -852,7 +827,6 @@ export default function Leaderboard() {
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 20px;
           background: rgba(2, 7, 13, 0.96);
-          box-shadow: inset 0 0 50px rgba(0, 230, 118, 0.06);
         }
 
         .leaderboard-table {
@@ -866,9 +840,7 @@ export default function Leaderboard() {
           padding: 18px 20px;
           text-align: left;
           border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-          font-family: var(--ui);
           font-size: 14px;
-          color: #d8e4ef;
         }
 
         .leaderboard-table th {
@@ -879,34 +851,18 @@ export default function Leaderboard() {
           background: rgba(255, 82, 82, 0.08);
         }
 
-        .leaderboard-table tr:nth-child(odd) {
-          background: rgba(255, 255, 255, 0.02);
-        }
-
-        .leaderboard-table tr:hover {
-          background: rgba(255, 82, 82, 0.12);
-        }
-
         .leaderboard-table td:first-child {
           color: #00e676;
           font-weight: 700;
         }
 
-        .leaderboard-table td:nth-child(2) {
-          color: #ff7b7b;
-          letter-spacing: 0.5px;
-        }
-
-        .leaderboard-table td:nth-child(5) {
-          font-family: var(--head);
-          color: #b388ff;
-        }
-
-        @media (max-width: 880px) {
-          .leaderboard-table th,
-          .leaderboard-table td {
-            padding: 14px 12px;
-          }
+        .btn-hint-side {
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #9bb3c1;
+          padding: 12px 18px;
+          border-radius: 999px;
+          cursor: pointer;
         }
       `}</style>
     </main>
