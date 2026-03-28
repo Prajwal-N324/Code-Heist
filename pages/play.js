@@ -92,7 +92,7 @@ const LEVELS = [
   public void setWing(String w)        { wing = w; }
 
   public String getRoomNumber()  { return roomNumber; }
-  public int    getLocationTag() { return locationTag; }
+  public int     getLocationTag() { return locationTag; }
   public String getWing()        { return wing; }
 
   public String getExactClue() {
@@ -419,6 +419,7 @@ export default function Play() {
     [currentRound]
   )
 
+  // --- UPDATED AI JUDGING LOGIC ---
   async function handleSubmit(event) {
     event.preventDefault()
     if (!answer.trim()) {
@@ -426,45 +427,36 @@ export default function Play() {
       return
     }
 
-    const expectedAnswer = roundData?.correct_answer?.trim().toLowerCase()
-    const submittedAnswer = answer.trim().toLowerCase()
-
-    if (expectedAnswer) {
-      if (submittedAnswer === expectedAnswer) {
-        setFeedback({ type: 'success', message: `Fragment Recovered: ${keyFragment}` })
-        setShowOverlay(true)
-        setIsUnlocked(true)
-        setLocationReveal(activeRound.location)
-      } else {
-        setFeedback({ type: 'error', message: 'Incorrect answer. Check the exact output and try again.' })
-      }
-      return
-    }
-
-    setFeedback({ type: 'pending', message: 'AI Reasoning in progress...' })
+    setFeedback({ type: 'pending', message: 'AI Overseer is analyzing your trace...' })
+    setStatus('Analyzing logic...')
 
     try {
-      const response = await fetch('/api/check-answer', {
+      const response = await fetch('/api/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          team_code: team?.code || teamCodeParam || null,
-          round_number: currentRound,
-          answer_text: answer
+          roundId: currentRound.toString(),
+          userSubmission: answer
         })
       })
 
       const result = await response.json()
-      if (result.correct) {
-        setFeedback({ type: 'success', message: `Fragment Recovered: ${keyFragment}` })
+
+      if (result.status === "CORRECT") {
+        setFeedback({ type: 'success', message: `Fragment Recovered: ${keyFragment}. Logic confirmed.` })
         setShowOverlay(true)
         setIsUnlocked(true)
         setLocationReveal(activeRound.location)
+      } else if (result.status === "CLOSE") {
+        setFeedback({ type: 'error', message: `NEAR MISS: ${result.hint}` })
+        setStatus('Trace partially recognized...')
       } else {
-        setFeedback({ type: 'error', message: result.message || 'The Overseer rejected your reasoning.' })
+        setFeedback({ type: 'error', message: result.message || 'ACCESS DENIED: Invalid trace detected.' })
+        setStatus('Invalid trace detected.')
       }
     } catch (error) {
-      setFeedback({ type: 'error', message: 'Unable to reach the reasoning engine. Try again.' })
+      console.error("AI Bridge Error:", error)
+      setFeedback({ type: 'error', message: 'COMMUNICATION ERROR: Unable to reach the reasoning engine.' })
     }
   }
 
