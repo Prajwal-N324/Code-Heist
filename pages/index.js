@@ -113,10 +113,10 @@ export default function Home() {
         <div className="rules-section">
           <div className="rules-title">RULES OF ENGAGEMENT</div>
           <ul className="rules-list">
-            <li>Trace the code logic to unlock the digital fragment.</li>
-            <li>Campus locations remain encrypted until the fragment is secured.</li>
-            <li>Physical verification at the revealed location is required for the next round.</li>
-            <li>Use the heistadmin bypass only if authorized by AlgoSphere staff.</li>
+            <li>Digital breach unlocks the physical campus location.</li>
+            <li>Collect the physical hint letter at each site to progress.</li>
+            <li>Final decryption requires all 4 fragments.</li>
+            <li>Unauthorized shortcuts will result in disqualification.</li>
           </ul>
         </div>
 

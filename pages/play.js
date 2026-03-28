@@ -54,7 +54,7 @@ const LEVELS = [
     editorInstruction: 'Trace the code on the left. Type the exact output that broadcastLocation() would print to the console, then hit SUBMIT CODE.',
     submitLabel: 'SUBMIT CODE ↵',
     location: 'North Wing — Locker 5',
-    botHint: 'Trace the private call chain · collect letter N →',
+    botHint: 'Trace the private call chain · Secure the first fragment →',
     success: {
       title: 'VAULT CRACKED',
       subtitle: 'LETTER SECURED',
@@ -121,7 +121,7 @@ const LEVELS = [
     editorInstruction: 'Trace every setter in order. Type the exact return value of getExactClue() — what System.out.println would print — then hit SUBMIT CODE.',
     submitLabel: 'SUBMIT CODE ↵',
     location: 'West Corridor — Archive Room, Shelf 3',
-    botHint: 'Trace every setter in order · collect letter E →',
+    botHint: 'Follow the setters · Secure the second fragment →',
     success: {
       title: 'DATA EXPOSED',
       subtitle: 'ENCAPSULATION CRACKED',
@@ -191,7 +191,7 @@ public class Level3 {
     editorInstruction: 'Substitute clue1 and clue2 into the child\'s locateNext(). Type the exact string printed by System.out.println, then hit SUBMIT CODE.',
     submitLabel: 'SUBMIT CODE ↵',
     location: 'Sector 25 — West Node',
-    botHint: 'Child overrides parent · collect letter X →',
+    botHint: 'Analyze the override · Secure the third fragment →',
     success: {
       title: 'CHAIN BROKEN',
       subtitle: 'INHERITANCE CRACKED',
@@ -268,7 +268,7 @@ public class Level4 {
     editorInstruction: 'Replace the ??? values below with the correct synonyms. Each decoder only accepts one specific word — study the class on the left, then hit SUBMIT CODE.',
     submitLabel: 'SUBMIT CODE ↵',
     location: 'Sector 25 — West Node (Final Checkpoint)',
-    botHint: 'Match each synonym to the correct decoder · complete the CODE HEIST →',
+    botHint: 'Match the synonyms · Secure the final fragment →',
     success: {
       title: 'SYNONYM LOCK OPEN',
       subtitle: 'POLYMORPHISM CRACKED',
