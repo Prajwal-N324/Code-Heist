@@ -278,7 +278,12 @@ public class Level4 {
   }
 ]
 
-const KEY_FRAGMENTS = ['N', 'E', 'X', 'U']
+const KEYS = {
+  1: 'N',
+  2: 'E',
+  3: 'X',
+  4: 'U'
+}
 
 export default function Play() {
   const router = useRouter()
@@ -295,6 +300,7 @@ export default function Play() {
   const [loading, setLoading] = useState(false)
 
   const level = LEVELS[currentRound - 1]
+  const keyFragment = KEYS[currentRound]
 
   const pageVariables = {
     '--accent': level.accent,
@@ -374,7 +380,7 @@ export default function Play() {
 
       const result = await response.json()
       if (result.correct) {
-        setFeedback({ type: 'success', message: `Access granted. Key Fragment Recovered: ${level.success.letter}` })
+        setFeedback({ type: 'success', message: `Fragment Recovered: ${keyFragment}` })
         setShowOverlay(true)
       } else {
         setFeedback({ type: 'error', message: result.message || 'The Overseer rejected your reasoning.' })
@@ -512,11 +518,11 @@ export default function Play() {
         <div className={`win-flash ${showOverlay ? 'show' : ''}`}>
             <div className="win-flash-title">{level.success.title}</div>
           <div className="win-flash-sub">{level.success.subtitle}</div>
-          <div className="win-flash-key">Access Granted. Key Fragment Recovered: {level.success.letter}</div>
-          <div className="win-flash-letter">{level.success.letter}</div>
+          <div className="win-flash-key">Fragment Recovered: {keyFragment}</div>
+          <div className="win-flash-letter">{keyFragment}</div>
           <div className="win-flash-next">{level.success.next}</div>
           {currentRound === LEVELS.length && (
-            <div className="win-flash-final">FINAL WORD: {KEY_FRAGMENTS.join('')}</div>
+            <div className="win-flash-final">FINAL WORD: {Object.values(KEYS).join('')}</div>
           )}
           <button className="btn-wf-next" onClick={handleNext}>
             {currentRound < LEVELS.length ? `PROCEED TO LEVEL ${currentRound + 1} →` : 'FINISH HEIST'}
