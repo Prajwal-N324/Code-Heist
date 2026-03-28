@@ -303,20 +303,21 @@ export default function Play() {
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
   const [roundLoading, setRoundLoading] = useState(false)
+  const [hintStatus, setHintStatus] = useState(null)
 
-  const level = LEVELS[currentRound - 1]
+  const baseLevel = LEVELS[currentRound - 1]
   const keyFragment = KEYS[currentRound]
 
   const activeRound = roundData
     ? {
-        ...level,
-        title: roundData.mission_title || level.title,
-        story: roundData.mission_text || roundData.mission_title || level.story,
-        codeSnippet: roundData.code_snippet || level.codeSnippet,
-        location: roundData.location_reveal || roundData.campus_location || level.location,
-        correct_answer: roundData.correct_answer
+        ...baseLevel,
+        title: roundData.mission_title || baseLevel.title,
+        story: roundData.mission_text || roundData.story || baseLevel.story,
+        codeSnippet: roundData.code_snippet || baseLevel.codeSnippet,
+        location: roundData.location_reveal || roundData.campus_location || baseLevel.location,
+        correct_answer: roundData.correct_answer || baseLevel.correct_answer
       }
-    : level
+    : baseLevel
 
   const pageVariables = {
     '--accent': activeRound.accent,
@@ -332,7 +333,7 @@ export default function Play() {
 
     supabase
       .from('teams')
-      .select('id,code,question_set_id')
+      .select('id,code,question_set_id,current_round,letters_collected,completed_at')
       .eq('code', teamCodeParam)
       .single()
       .then(({ data, error }) => {
@@ -378,7 +379,7 @@ export default function Play() {
     async function loadRoundData() {
       const { data, error } = await supabase
         .from('rounds')
-        .select('id,set_id,round_number,mission_title,mission_text,code_snippet,correct_answer,campus_location,location_reveal')
+        .select('id,set_id,round_number,mission_title,mission_text,code_snippet,correct_answer,hint_text,campus_location,location_reveal')
         .eq('set_id', setId)
         .eq('round_number', currentRound)
         .single()
@@ -396,7 +397,9 @@ export default function Play() {
 
   useEffect(() => {
     setAnswer('')
+    setHintLetter('')
     setFeedback(null)
+    setHintStatus(null)
     setShowOverlay(false)
     setIsUnlocked(false)
     setLocationReveal('')
@@ -465,6 +468,53 @@ export default function Play() {
     }
   }
 
+  async function handleHintSubmit() {
+    if (!hintLetter.trim()) {
+      setHintStatus({ type: 'error', message: 'Enter the campus hint letter before saving.' })
+      return
+    }
+    if (!isUnlocked) {
+      setHintStatus({ type: 'error', message: 'Solve the round first to unlock the campus hint.' })
+      return
+    }
+
+    const expectedHint = (roundData?.hint_text || '').trim().toLowerCase()
+    if (!expectedHint) {
+      setHintStatus({ type: 'error', message: 'This round has no configured physical hint yet.' })
+      return
+    }
+
+    if (hintLetter.trim().toLowerCase() !== expectedHint) {
+      setHintStatus({ type: 'error', message: 'Campus hint does not match. Check the clue on site.' })
+      return
+    }
+
+    setHintStatus({ type: 'success', message: 'Campus clue verified. Saving your progress...' })
+
+    if (!team?.id) {
+      return
+    }
+
+    const updatePayload = {
+      current_round: currentRound + 1,
+      letters_collected: (team.letters_collected || 0) + 1
+    }
+    if (currentRound >= LEVELS.length) {
+      updatePayload.completed_at = new Date().toISOString()
+    }
+
+    const { data, error } = await supabase.from('teams').update(updatePayload).eq('id', team.id)
+    if (error) {
+      setHintStatus({ type: 'error', message: 'Unable to store progress: ' + error.message })
+      return
+    }
+
+    if (data?.[0]) {
+      setTeam(data[0])
+      setHintStatus({ type: 'success', message: 'Progress saved. Continue to the next level.' })
+    }
+  }
+
   function handleNext() {
     if (currentRound < LEVELS.length) {
       const next = currentRound + 1
@@ -484,8 +534,8 @@ export default function Play() {
   return (
     <>
       <Head>
-        <title>CODE HEIST — Level {currentRound}: {level.title}</title>
-        <meta name="description" content={`Code Heist dynamic level engine — ${level.title}`} />
+        <title>CODE HEIST — Level {currentRound}: {activeRound.title}</title>
+        <meta name="description" content={`Code Heist dynamic level engine — ${activeRound.title}`} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
@@ -495,14 +545,14 @@ export default function Play() {
       </Head>
 
       <div className="bg-grid" />
-      <div className="glow-orb" style={{ background: `radial-gradient(circle, ${level.accentSoft} 0%, transparent 70%)` }} />
+      <div className="glow-orb" style={{ background: `radial-gradient(circle, ${activeRound.accentSoft} 0%, transparent 70%)` }} />
 
       <main className="page-shell play-shell" style={pageVariables}>
         <div className="topbar">
           <div>
             <div className="tb-logo">CODE HEIST</div>
             <div className="tb-mission">
-              <span className="live-dot" />{level.mission}
+              <span className="live-dot" />{activeRound.mission}
             </div>
           </div>
           <div className="tb-level">LEVEL {currentRound} OF {LEVELS.length}</div>
@@ -511,31 +561,28 @@ export default function Play() {
         <div className="level-banner">
           <div className="lv-badge">0{currentRound}</div>
           <div className="lv-info">
-            <div className="lv-title">{level.title}</div>
-            <div className="lv-subtitle">{level.subtitle}</div>
+            <div className="lv-title">{activeRound.title}</div>
+            <div className="lv-subtitle">{activeRound.subtitle}</div>
           </div>
-          <div className="lv-concept">🔒 CONCEPT: {level.concept}</div>
+          <div className="lv-concept">🔒 CONCEPT: {activeRound.concept}</div>
         </div>
-
-        <div className="tabs">{tabs}</div>
-
         <div className="split">
           <div className="left-panel">
             <div className="story-box">
               <div className="story-label">▶ INTEL BRIEF</div>
-              <div className="story-text">{level.story}</div>
+              <div className="story-text">{activeRound.story}</div>
             </div>
             <div className="code-header">
-              <div className="code-filename">{level.codeFilename}</div>
-              <div className="java-tag">{level.codeTag}</div>
+              <div className="code-filename">{activeRound.codeFilename}</div>
+              <div className="java-tag">{activeRound.codeTag}</div>
             </div>
             <div className="code-scroll">
-              <pre>{level.codeSnippet}</pre>
+              <pre>{activeRound.codeSnippet}</pre>
             </div>
             <div className="hint-box">
               <div className="hint-label">⚡ LEVEL RULES</div>
               <div className="hint-items">
-                {level.hintItems.map((hint, index) => (
+                {(activeRound.hintItems || []).map((hint, index) => (
                   <div key={index} className="hint-item">{hint}</div>
                 ))}
               </div>
@@ -545,11 +592,11 @@ export default function Play() {
           <div className="right-panel">
             <div className="editor-header">
               <div className="editor-title">YOUR ANSWER</div>
-              <div className="editor-badge">{level.editorBadge}</div>
+              <div className="editor-badge">{activeRound.editorBadge}</div>
             </div>
             <div className="editor-wrap">
               <div className="editor-instruction">
-                {level.editorInstruction}
+                {activeRound.editorInstruction}
               </div>
               <textarea
                 className="code-editor"
@@ -569,18 +616,15 @@ export default function Play() {
             </div>
             <div className="btn-row">
               <button className="btn-submit" onClick={handleSubmit}>
-                {level.submitLabel}
+                {activeRound.submitLabel}
               </button>
             </div>
             
-            {/* Conditional Rendering for Campus Location */}
             <div className="info-card">
-                <div className="info-label">Campus Location Reveal</div>
-                {isUnlocked ? (
-                    <div className="info-copy">{locationReveal || activeRound.location}</div>
-                ) : (
-                    <div className="info-copy" style={{ opacity: 0.6 }}>Location Encrypted — Solve to Decrypt</div>
-                )}
+              <div className="info-label">Campus Location Reveal</div>
+              <div className="info-copy" style={{ opacity: isUnlocked ? 1 : 0.6 }}>
+                {isUnlocked ? locationReveal || activeRound.location : 'Location Encrypted — Solve to Decrypt'}
+              </div>
             </div>
 
             <div className="hint-letter-panel">
@@ -591,6 +635,14 @@ export default function Play() {
                 onChange={(event) => setHintLetter(event.target.value)}
                 placeholder="Enter the hint letter found on campus"
               />
+              <button type="button" className="btn-secondary" onClick={handleHintSubmit}>
+                Verify Hint Letter
+              </button>
+              {hintStatus && (
+                <div className={`hint-status ${hintStatus.type}`}>
+                  {hintStatus.message}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -598,11 +650,11 @@ export default function Play() {
         <div className="small-note">{outputHint}</div>
 
         <div className={`win-flash ${showOverlay ? 'show' : ''}`}>
-            <div className="win-flash-title">{level.success.title}</div>
-          <div className="win-flash-sub">{level.success.subtitle}</div>
+            <div className="win-flash-title">{activeRound.success.title}</div>
+          <div className="win-flash-sub">{activeRound.success.subtitle}</div>
           <div className="win-flash-key">Fragment Recovered: {keyFragment}</div>
           <div className="win-flash-letter">{keyFragment}</div>
-          <div className="win-flash-next">{level.success.next}</div>
+          <div className="win-flash-next">{activeRound.success.next}</div>
           {currentRound === LEVELS.length && (
             <div className="win-flash-final">FINAL WORD: {Object.values(KEYS).join('')}</div>
           )}

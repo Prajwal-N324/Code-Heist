@@ -19,7 +19,8 @@ export default function Leaderboard() {
     mission_title: '',
     code_snippet: '',
     correct_answer: '',
-    campus_location: ''
+    hint_text: '',
+    location_reveal: ''
   })
   const [configStatus, setConfigStatus] = useState('')
 
@@ -58,7 +59,7 @@ export default function Leaderboard() {
       const [{ data: rounds, error: roundsError }, { data: activeSet, error: settingsError }] = await Promise.all([
         supabase
           .from('rounds')
-          .select('id,set_id,round_number,mission_title,code_snippet,correct_answer,campus_location')
+          .select('id,set_id,round_number,mission_title,code_snippet,correct_answer,hint_text,campus_location,location_reveal')
           .order('set_id', { ascending: true })
           .order('round_number', { ascending: true }),
         supabase
@@ -122,7 +123,8 @@ export default function Leaderboard() {
       mission_title: '',
       code_snippet: '',
       correct_answer: '',
-      campus_location: ''
+      hint_text: '',
+      location_reveal: ''
     })
     setConfigStatus('Ready to create a new round.')
   }
@@ -136,7 +138,8 @@ export default function Leaderboard() {
       mission_title: round.mission_title || '',
       code_snippet: round.code_snippet || '',
       correct_answer: round.correct_answer || '',
-      campus_location: round.campus_location || ''
+      hint_text: round.hint_text || '',
+      location_reveal: round.location_reveal || round.campus_location || ''
     })
     setConfigStatus(`Editing round ${round.round_number} from set ${round.set_id}`)
   }
@@ -169,7 +172,9 @@ export default function Leaderboard() {
       mission_title: roundForm.mission_title,
       code_snippet: roundForm.code_snippet,
       correct_answer: roundForm.correct_answer,
-      campus_location: roundForm.campus_location
+      hint_text: roundForm.hint_text,
+      location_reveal: roundForm.location_reveal,
+      campus_location: roundForm.location_reveal || roundForm.campus_location
     }
 
     if (roundForm.id) {
@@ -190,7 +195,7 @@ export default function Leaderboard() {
 
     const { data, error } = await supabase
       .from('rounds')
-      .select('id,set_id,round_number,mission_title,code_snippet,correct_answer,campus_location')
+      .select('id,set_id,round_number,mission_title,code_snippet,correct_answer,hint_text,campus_location,location_reveal')
       .order('set_id', { ascending: true })
       .order('round_number', { ascending: true })
 
@@ -363,11 +368,20 @@ export default function Leaderboard() {
                   />
                 </label>
                 <label>
-                  Campus Location
+                  Hint Text
                   <input
                     className="input"
-                    value={roundForm.campus_location}
-                    onChange={(event) => setRoundForm((prev) => ({ ...prev, campus_location: event.target.value }))}
+                    value={roundForm.hint_text}
+                    onChange={(event) => setRoundForm((prev) => ({ ...prev, hint_text: event.target.value }))}
+                    placeholder="Enter the physical hint letter or clue"
+                  />
+                </label>
+                <label>
+                  Campus Location Reveal
+                  <input
+                    className="input"
+                    value={roundForm.location_reveal}
+                    onChange={(event) => setRoundForm((prev) => ({ ...prev, location_reveal: event.target.value }))}
                     placeholder="North Wing — Locker 5"
                   />
                 </label>
@@ -393,7 +407,8 @@ export default function Leaderboard() {
                   <th>Title</th>
                   <th>Code snippet</th>
                   <th>Answer</th>
-                  <th>Location</th>
+                  <th>Hint Text</th>
+                  <th>Location Reveal</th>
                 </tr>
               </thead>
               <tbody>
@@ -404,7 +419,8 @@ export default function Leaderboard() {
                     <td>{round.mission_title || '—'}</td>
                     <td>{round.code_snippet ? `${round.code_snippet.slice(0, 80)}${round.code_snippet.length > 80 ? '…' : ''}` : '—'}</td>
                     <td>{round.correct_answer ? `${round.correct_answer.slice(0, 80)}${round.correct_answer.length > 80 ? '…' : ''}` : '—'}</td>
-                    <td>{round.campus_location || '—'}</td>
+                    <td>{round.hint_text ? `${round.hint_text.slice(0, 80)}${round.hint_text.length > 80 ? '…' : ''}` : '—'}</td>
+                    <td>{round.location_reveal || round.campus_location || '—'}</td>
                   </tr>
                 ))}
               </tbody>
