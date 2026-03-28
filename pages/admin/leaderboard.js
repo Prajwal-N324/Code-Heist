@@ -23,6 +23,10 @@ export default function Leaderboard() {
     location_reveal: ''
   })
   const [configStatus, setConfigStatus] = useState('')
+  const [newTeamName, setNewTeamName] = useState('')
+  const [generatedAccessCode, setGeneratedAccessCode] = useState('')
+  const [registrationStatus, setRegistrationStatus] = useState('')
+  const [isRegistering, setIsRegistering] = useState(false)
 
   useEffect(() => {
     const authValue = typeof window !== 'undefined' ? window.localStorage.getItem('admin_auth') : null
@@ -127,6 +131,109 @@ export default function Leaderboard() {
       location_reveal: ''
     })
     setConfigStatus('Ready to create a new round.')
+  }
+
+  const generateAccessKey = (teamName) => {
+    const cleaned = (teamName || 'HEIST')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+
+    const first = (cleaned[0] || 'HEIS').slice(0, 4).padEnd(4, 'X')
+    const second = (cleaned[1] || Math.floor(Date.now() / 1000).toString(36).toUpperCase().slice(-4)).slice(0, 4).padEnd(4, 'X')
+    const salt = Array.from({ length: 4 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]).join('')
+
+    return `${first}-${second}-${salt}`
+  }
+
+  const handleCopyAccessCode = async () => {
+    if (!generatedAccessCode) return
+    try {
+      await navigator.clipboard.writeText(generatedAccessCode)
+      setRegistrationStatus('Access key copied to clipboard.')
+    } catch {
+      setRegistrationStatus('Copy failed. Please copy the key manually.')
+    }
+  }
+
+  const handleGenerateAndRegister = async (event) => {
+    event.preventDefault()
+    const teamName = newTeamName.trim()
+    if (!teamName) {
+      setRegistrationStatus('Team Name is required.')
+      return
+    }
+
+    setIsRegistering(true)
+    setRegistrationStatus('Checking for duplicate teams...')
+
+    const normalizeCheck = (result) => result.status === 'fulfilled' && result.value?.data && !result.value.error
+
+    const duplicateChecks = await Promise.allSettled([
+      supabase.from('teams').select('id').eq('name', teamName).maybeSingle(),
+      supabase.from('teams').select('id').eq('team_name', teamName).maybeSingle()
+    ])
+
+    if (duplicateChecks.some(normalizeCheck)) {
+      setRegistrationStatus('A team with that name already exists. Use a different name.')
+      setIsRegistering(false)
+      return
+    }
+
+    let accessCode = generateAccessKey(teamName)
+    let collision = false
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const codeChecks = await Promise.allSettled([
+        supabase.from('teams').select('id').eq('code', accessCode).maybeSingle(),
+        supabase.from('teams').select('id').eq('access_code', accessCode).maybeSingle()
+      ])
+      if (!codeChecks.some(normalizeCheck)) {
+        collision = false
+        break
+      }
+      collision = true
+      accessCode = generateAccessKey(teamName)
+    }
+
+    if (collision) {
+      setRegistrationStatus('Unable to generate a unique access key. Try again.')
+      setIsRegistering(false)
+      return
+    }
+
+    const payload = {
+      team_name: teamName,
+      access_code: accessCode,
+      name: teamName,
+      code: accessCode,
+      current_round: 1,
+      letters_collected: '',
+      score: 0
+    }
+
+    let insertResult = await supabase.from('teams').insert(payload)
+    if (insertResult.error) {
+      const fallbackPayload = {
+        name: teamName,
+        code: accessCode,
+        current_round: 1,
+        letters_collected: '',
+        score: 0
+      }
+      const fallbackResult = await supabase.from('teams').insert(fallbackPayload)
+      if (fallbackResult.error) {
+        setRegistrationStatus('Registration failed: ' + fallbackResult.error.message)
+        setIsRegistering(false)
+        return
+      }
+    }
+
+    setGeneratedAccessCode(accessCode)
+    setRegistrationStatus('Team registered successfully. Access key ready.')
+    setNewTeamName('')
+    setIsRegistering(false)
   }
 
   const openRoundEditor = (round) => {
@@ -398,6 +505,43 @@ export default function Leaderboard() {
             </div>
           </div>
 
+          <div className="config-row">
+            <div className="config-card">
+              <div className="editor-header">
+                <div>
+                  <div className="tb-level">Registration</div>
+                  <h2 className="lv-title">Register New Team</h2>
+                </div>
+              </div>
+              <form onSubmit={handleGenerateAndRegister} className="editor-wrap">
+                <label>
+                  Team Name
+                  <input
+                    className="input"
+                    value={newTeamName}
+                    onChange={(event) => setNewTeamName(event.target.value)}
+                    placeholder="Enter the team name"
+                  />
+                </label>
+                <button type="submit" className="btn-primary" disabled={isRegistering || !newTeamName.trim()}>
+                  {isRegistering ? 'Generating...' : 'Generate & Register'}
+                </button>
+
+                {generatedAccessCode && (
+                  <div className="access-box">
+                    <div className="access-label">Generated Access Key</div>
+                    <div className="access-key">{generatedAccessCode}</div>
+                    <button type="button" className="btn-secondary" onClick={handleCopyAccessCode}>
+                      Copy to Clipboard
+                    </button>
+                  </div>
+                )}
+
+                {registrationStatus && <div className="info-banner">{registrationStatus}</div>}
+              </form>
+            </div>
+          </div>
+
           <div className="table-wrap neon-glow" style={{ marginTop: '24px' }}>
             <table className="leaderboard-table">
               <thead>
@@ -502,6 +646,35 @@ export default function Leaderboard() {
           border: 1px solid rgba(0, 230, 118, 0.16);
           border-radius: 16px;
           color: #c8f6d6;
+        }
+
+        .access-box {
+          margin-top: 18px;
+          padding: 18px;
+          background: rgba(0, 230, 118, 0.06);
+          border: 1px solid rgba(0, 230, 118, 0.18);
+          border-radius: 20px;
+        }
+
+        .access-label {
+          font-size: 0.75rem;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: #9bb3c1;
+          margin-bottom: 10px;
+          display: block;
+        }
+
+        .access-key {
+          font-family: var(--mono);
+          font-size: 1rem;
+          letter-spacing: 0.16em;
+          padding: 14px 16px;
+          background: rgba(0, 0, 0, 0.16);
+          border-radius: 16px;
+          color: #ffffff;
+          margin-bottom: 12px;
+          word-break: break-all;
         }
 
         .terminal-panel {

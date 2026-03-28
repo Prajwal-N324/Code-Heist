@@ -3,6 +3,10 @@
 -- teams table: link each team to a seeded question set
 ALTER TABLE IF EXISTS teams
 ADD COLUMN IF NOT EXISTS question_set_id INT;
+ALTER TABLE IF EXISTS teams
+ADD COLUMN IF NOT EXISTS team_name TEXT;
+ALTER TABLE IF EXISTS teams
+ADD COLUMN IF NOT EXISTS access_code TEXT;
 
 -- rounds table: allow multiple question sets, e.g. Set A and Set B
 ALTER TABLE IF EXISTS rounds
