@@ -78,7 +78,7 @@ const LEVELS = [
     codeSnippet: `public class DataVault {
 
   private String roomNumber = "DUMMY";
-  private int    locationTag = 999;
+  private int     locationTag = 999;
   private String wing = "SOUTH";
 
   public DataVault() {
@@ -295,6 +295,7 @@ export default function Play() {
   const [hintLetter, setHintLetter] = useState('')
   const [feedback, setFeedback] = useState(null)
   const [showOverlay, setShowOverlay] = useState(false)
+  const [isUnlocked, setIsUnlocked] = useState(false)
   const [team, setTeam] = useState(null)
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
@@ -342,6 +343,7 @@ export default function Play() {
     setAnswer('')
     setFeedback(null)
     setShowOverlay(false)
+    setIsUnlocked(false)
   }, [currentRound])
 
   const tabs = useMemo(
@@ -382,6 +384,7 @@ export default function Play() {
       if (result.correct) {
         setFeedback({ type: 'success', message: `Fragment Recovered: ${keyFragment}` })
         setShowOverlay(true)
+        setIsUnlocked(true)
       } else {
         setFeedback({ type: 'error', message: result.message || 'The Overseer rejected your reasoning.' })
       }
@@ -497,10 +500,17 @@ export default function Play() {
                 {level.submitLabel}
               </button>
             </div>
+            
+            {/* Conditional Rendering for Campus Location */}
             <div className="info-card">
-              <div className="info-label">Campus Location Reveal</div>
-              <div className="info-copy">{level.location}</div>
+                <div className="info-label">Campus Location Reveal</div>
+                {isUnlocked ? (
+                    <div className="info-copy">{level.location}</div>
+                ) : (
+                    <div className="info-copy" style={{ opacity: 0.6 }}>Location Encrypted — Solve to Decrypt</div>
+                )}
             </div>
+
             <div className="hint-letter-panel">
               <label htmlFor="hint-letter">Physical Hint Letter Input</label>
               <input
