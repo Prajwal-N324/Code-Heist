@@ -343,7 +343,7 @@ export default function Play() {
           setTeam(null)
         } else {
           setTeam(data)
-          setStatus(`Team ${data.code} loaded. Question set ${data.question_set_id}.`)
+          setStatus(`Team ${data.code} loaded.`)
         }
       })
       .finally(() => {
@@ -367,7 +367,6 @@ export default function Play() {
         setActiveSetId(data.value)
       }
     }
-
     loadActiveSet()
   }, [])
 
@@ -405,21 +404,7 @@ export default function Play() {
     setLocationReveal('')
   }, [currentRound])
 
-  const tabs = useMemo(
-    () =>
-      LEVELS.map((item) => (
-        <div
-          key={item.number}
-          className={`tab ${item.number === currentRound ? 'now' : item.number < currentRound ? 'done' : 'open'}`}
-        >
-          <span className="tdot" />
-          LEVEL {item.number}
-        </div>
-      )),
-    [currentRound]
-  )
-
-  // --- UPDATED AI JUDGING LOGIC ---
+  // --- REPLACED SUBMIT LOGIC WITH API CALL ---
   async function handleSubmit(event) {
     event.preventDefault()
     if (!answer.trim()) {
@@ -431,7 +416,9 @@ export default function Play() {
     setStatus('Analyzing logic...')
 
     try {
+      // Ensure currentRound matches the "round-X" format in judge.js
       const currentRoundId = `round-${currentRound}`
+      
       const response = await fetch('/api/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -448,6 +435,7 @@ export default function Play() {
         setShowOverlay(true)
         setIsUnlocked(true)
         setLocationReveal(activeRound.location)
+        setStatus('Access Granted.')
       } else if (result.status === "CLOSE") {
         setFeedback({ type: 'error', message: `NEAR MISS: ${result.hint}` })
         setStatus('Trace partially recognized...')
@@ -457,7 +445,7 @@ export default function Play() {
       }
     } catch (error) {
       console.error("AI Bridge Error:", error)
-      setFeedback({ type: 'error', message: 'COMMUNICATION ERROR: Unable to reach the reasoning engine.' })
+      setFeedback({ type: 'error', message: 'COMMUNICATION ERROR: AI Overseer is offline.' })
     }
   }
 
@@ -473,20 +461,18 @@ export default function Play() {
 
     const expectedHint = (roundData?.hint_text || '').trim().toLowerCase()
     if (!expectedHint) {
-      setHintStatus({ type: 'error', message: 'This round has no configured physical hint yet.' })
+      setHintStatus({ type: 'error', message: 'No campus clue configured for this round.' })
       return
     }
 
     if (hintLetter.trim().toLowerCase() !== expectedHint) {
-      setHintStatus({ type: 'error', message: 'Campus hint does not match. Check the clue on site.' })
+      setHintStatus({ type: 'error', message: 'Campus hint mismatch. Check the site again.' })
       return
     }
 
-    setHintStatus({ type: 'success', message: 'Campus clue verified. Saving your progress...' })
+    setHintStatus({ type: 'success', message: 'Clue verified. Syncing progress...' })
 
-    if (!team?.id) {
-      return
-    }
+    if (!team?.id) return
 
     const updatePayload = {
       current_round: currentRound + 1,
@@ -496,15 +482,11 @@ export default function Play() {
       updatePayload.completed_at = new Date().toISOString()
     }
 
-    const { data, error } = await supabase.from('teams').update(updatePayload).eq('id', team.id)
+    const { error } = await supabase.from('teams').update(updatePayload).eq('id', team.id)
     if (error) {
-      setHintStatus({ type: 'error', message: 'Unable to store progress: ' + error.message })
-      return
-    }
-
-    if (data?.[0]) {
-      setTeam(data[0])
-      setHintStatus({ type: 'success', message: 'Progress saved. Continue to the next level.' })
+      setHintStatus({ type: 'error', message: 'Sync failed: ' + error.message })
+    } else {
+      setHintStatus({ type: 'success', message: 'Progress saved. Next level initialized.' })
     }
   }
 
@@ -519,16 +501,15 @@ export default function Play() {
 
   const outputHint = useMemo(() => {
     if (feedback?.type === 'success') {
-      return 'Campus location unlocked. Enter the hint letter from the field on the right.'
+      return 'Campus location unlocked. Enter the field clue to proceed.'
     }
-    return activeRound.botHint || 'Check your logic using the Code Puzzle panel before inspecting the next clue.'
+    return activeRound.botHint || 'Trace the logic to recover the fragment.'
   }, [feedback, activeRound.botHint])
 
   return (
     <>
       <Head>
-        <title>CODE HEIST — Level {currentRound}: {activeRound.title}</title>
-        <meta name="description" content={`Code Heist dynamic level engine — ${activeRound.title}`} />
+        <title>CODE HEIST — Level {currentRound}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
@@ -559,6 +540,7 @@ export default function Play() {
           </div>
           <div className="lv-concept">🔒 CONCEPT: {activeRound.concept}</div>
         </div>
+        
         <div className="split">
           <div className="left-panel">
             <div className="story-box">
@@ -603,7 +585,7 @@ export default function Play() {
                 <div className="result-icon">{feedback?.type === 'success' ? '✔' : feedback?.type === 'error' ? '✗' : '…'}</div>
                 <div className="result-text">
                   <div className="result-title">{feedback?.type === 'success' ? 'ACCESS GRANTED' : feedback?.type === 'error' ? 'ACCESS DENIED' : 'JUDGING'}</div>
-                  <div className="result-sub">{feedback?.message || 'Submit your answer to activate the AI Overseer.'}</div>
+                  <div className="result-sub">{feedback?.message || 'Awaiting submission...'}</div>
                 </div>
               </div>
             </div>
@@ -643,14 +625,11 @@ export default function Play() {
         <div className="small-note">{outputHint}</div>
 
         <div className={`win-flash ${showOverlay ? 'show' : ''}`}>
-            <div className="win-flash-title">{activeRound.success.title}</div>
+          <div className="win-flash-title">{activeRound.success.title}</div>
           <div className="win-flash-sub">{activeRound.success.subtitle}</div>
           <div className="win-flash-key">Fragment Recovered: {keyFragment}</div>
           <div className="win-flash-letter">{keyFragment}</div>
           <div className="win-flash-next">{activeRound.success.next}</div>
-          {currentRound === LEVELS.length && (
-            <div className="win-flash-final">FINAL WORD: {Object.values(KEYS).join('')}</div>
-          )}
           <button className="btn-wf-next" onClick={handleNext}>
             {currentRound < LEVELS.length ? `PROCEED TO LEVEL ${currentRound + 1} →` : 'FINISH HEIST'}
           </button>
