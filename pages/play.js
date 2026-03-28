@@ -296,17 +296,32 @@ export default function Play() {
   const [feedback, setFeedback] = useState(null)
   const [showOverlay, setShowOverlay] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(false)
+  const [locationReveal, setLocationReveal] = useState('')
+  const [roundData, setRoundData] = useState(null)
+  const [activeSetId, setActiveSetId] = useState(null)
   const [team, setTeam] = useState(null)
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
+  const [roundLoading, setRoundLoading] = useState(false)
 
   const level = LEVELS[currentRound - 1]
   const keyFragment = KEYS[currentRound]
 
+  const activeRound = roundData
+    ? {
+        ...level,
+        title: roundData.mission_title || level.title,
+        story: roundData.mission_text || roundData.mission_title || level.story,
+        codeSnippet: roundData.code_snippet || level.codeSnippet,
+        location: roundData.location_reveal || roundData.campus_location || level.location,
+        correct_answer: roundData.correct_answer
+      }
+    : level
+
   const pageVariables = {
-    '--accent': level.accent,
-    '--accent-soft': level.accentSoft,
-    '--accent-alt': level.accentAlt
+    '--accent': activeRound.accent,
+    '--accent-soft': activeRound.accentSoft,
+    '--accent-alt': activeRound.accentAlt
   }
 
   useEffect(() => {
@@ -340,10 +355,51 @@ export default function Play() {
   }, [teamCodeParam])
 
   useEffect(() => {
+    async function loadActiveSet() {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'active_set_id')
+        .single()
+
+      if (!error && data?.value) {
+        setActiveSetId(data.value)
+      }
+    }
+
+    loadActiveSet()
+  }, [])
+
+  useEffect(() => {
+    const setId = team?.question_set_id || activeSetId
+    if (!setId) return
+
+    setRoundLoading(true)
+    async function loadRoundData() {
+      const { data, error } = await supabase
+        .from('rounds')
+        .select('id,set_id,round_number,mission_title,mission_text,code_snippet,correct_answer,campus_location,location_reveal')
+        .eq('set_id', setId)
+        .eq('round_number', currentRound)
+        .single()
+
+      if (!error && data) {
+        setRoundData(data)
+      } else {
+        setRoundData(null)
+      }
+      setRoundLoading(false)
+    }
+
+    loadRoundData()
+  }, [team, activeSetId, currentRound])
+
+  useEffect(() => {
     setAnswer('')
     setFeedback(null)
     setShowOverlay(false)
     setIsUnlocked(false)
+    setLocationReveal('')
   }, [currentRound])
 
   const tabs = useMemo(
@@ -367,6 +423,21 @@ export default function Play() {
       return
     }
 
+    const expectedAnswer = roundData?.correct_answer?.trim().toLowerCase()
+    const submittedAnswer = answer.trim().toLowerCase()
+
+    if (expectedAnswer) {
+      if (submittedAnswer === expectedAnswer) {
+        setFeedback({ type: 'success', message: `Fragment Recovered: ${keyFragment}` })
+        setShowOverlay(true)
+        setIsUnlocked(true)
+        setLocationReveal(activeRound.location)
+      } else {
+        setFeedback({ type: 'error', message: 'Incorrect answer. Check the exact output and try again.' })
+      }
+      return
+    }
+
     setFeedback({ type: 'pending', message: 'AI Reasoning in progress...' })
 
     try {
@@ -385,6 +456,7 @@ export default function Play() {
         setFeedback({ type: 'success', message: `Fragment Recovered: ${keyFragment}` })
         setShowOverlay(true)
         setIsUnlocked(true)
+        setLocationReveal(activeRound.location)
       } else {
         setFeedback({ type: 'error', message: result.message || 'The Overseer rejected your reasoning.' })
       }
@@ -406,8 +478,8 @@ export default function Play() {
     if (feedback?.type === 'success') {
       return 'Campus location unlocked. Enter the hint letter from the field on the right.'
     }
-    return level.botHint || 'Check your logic using the Code Puzzle panel before inspecting the next clue.'
-  }, [feedback, level.botHint])
+    return activeRound.botHint || 'Check your logic using the Code Puzzle panel before inspecting the next clue.'
+  }, [feedback, activeRound.botHint])
 
   return (
     <>
@@ -505,7 +577,7 @@ export default function Play() {
             <div className="info-card">
                 <div className="info-label">Campus Location Reveal</div>
                 {isUnlocked ? (
-                    <div className="info-copy">{level.location}</div>
+                    <div className="info-copy">{locationReveal || activeRound.location}</div>
                 ) : (
                     <div className="info-copy" style={{ opacity: 0.6 }}>Location Encrypted — Solve to Decrypt</div>
                 )}
