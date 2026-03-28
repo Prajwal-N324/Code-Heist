@@ -1168,6 +1168,15 @@ a {
   margin-bottom: 24px;
 }
 
+.win-flash-key {
+  font-family: var(--ui);
+  font-size: clamp(14px, 2.5vw, 18px);
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
 .win-flash-letter {
   font-family: var(--head);
   font-size: clamp(60px, 15vw, 100px);
@@ -1184,6 +1193,16 @@ a {
   text-align: center;
   max-width: 520px;
   line-height: 1.8;
+}
+
+.win-flash-final {
+  font-family: var(--head);
+  font-size: clamp(18px, 3vw, 24px);
+  color: var(--accent);
+  letter-spacing: 4px;
+  margin: 22px 0 16px;
+  text-transform: uppercase;
+  text-shadow: 0 0 24px rgba(0, 230, 118, 0.4);
 }
 
 .win-flash-next em {

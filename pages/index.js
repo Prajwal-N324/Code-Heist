@@ -3,10 +3,10 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 
 const LEVEL_OVERVIEW = [
-  { code: 'L-01', name: 'Abstraction', tag: 'trace public → private', key: 'N', subtitle: 'Private Vault' },
-  { code: 'L-02', name: 'Encapsulation', tag: 'follow the setters', key: 'E', subtitle: 'Jumbled Code Box' },
-  { code: 'L-03', name: 'Inheritance', tag: 'child overrides parent', key: 'X', subtitle: 'Clue Chain' },
-  { code: 'L-04', name: 'Polymorphism', tag: 'same method, right class', key: 'U', subtitle: 'Synonym Lock' }
+  { code: 'L-01', name: 'Abstraction', tag: 'trace public → private' },
+  { code: 'L-02', name: 'Encapsulation', tag: 'follow the setters' },
+  { code: 'L-03', name: 'Inheritance', tag: 'child overrides parent' },
+  { code: 'L-04', name: 'Polymorphism', tag: 'same method, right class' }
 ]
 
 export default function Home() {
@@ -102,10 +102,8 @@ export default function Home() {
                 {level.code === 'L-01' ? '🔒' : level.code === 'L-02' ? '📦' : level.code === 'L-03' ? '🧬' : '🎭'}
               </div>
               <div>
-                <div className="lv-n">{level.code}</div>
                 <div className="lv-name">{level.name}</div>
                 <div className="lv-tag">{level.tag}</div>
-                <div className="lv-key">key char = {level.key} · {level.subtitle}</div>
               </div>
             </div>
           ))}
@@ -114,10 +112,6 @@ export default function Home() {
         <button className="start-btn" onClick={handleGuestStart}>
           INITIATE BREACH
         </button>
-
-        <div className="land-note">
-          Final word = N·E·X·U · key to unlock CODE HEIST. No shortcuts. Only the hidden path.
-        </div>
       </main>
 
       <div

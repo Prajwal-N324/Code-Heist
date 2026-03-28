@@ -278,6 +278,8 @@ public class Level4 {
   }
 ]
 
+const KEY_FRAGMENTS = ['N', 'E', 'X', 'U']
+
 export default function Play() {
   const router = useRouter()
   const { team_code, round } = router.query
@@ -372,7 +374,7 @@ export default function Play() {
 
       const result = await response.json()
       if (result.correct) {
-        setFeedback({ type: 'success', message: 'Access granted. Your logic passed the Overseer.' })
+        setFeedback({ type: 'success', message: `Access granted. Key Fragment Recovered: ${level.success.letter}` })
         setShowOverlay(true)
       } else {
         setFeedback({ type: 'error', message: result.message || 'The Overseer rejected your reasoning.' })
@@ -508,10 +510,14 @@ export default function Play() {
         <div className="small-note">{outputHint}</div>
 
         <div className={`win-flash ${showOverlay ? 'show' : ''}`}>
-          <div className="win-flash-title">{level.success.title}</div>
+            <div className="win-flash-title">{level.success.title}</div>
           <div className="win-flash-sub">{level.success.subtitle}</div>
+          <div className="win-flash-key">Access Granted. Key Fragment Recovered: {level.success.letter}</div>
           <div className="win-flash-letter">{level.success.letter}</div>
           <div className="win-flash-next">{level.success.next}</div>
+          {currentRound === LEVELS.length && (
+            <div className="win-flash-final">FINAL WORD: {KEY_FRAGMENTS.join('')}</div>
+          )}
           <button className="btn-wf-next" onClick={handleNext}>
             {currentRound < LEVELS.length ? `PROCEED TO LEVEL ${currentRound + 1} →` : 'FINISH HEIST'}
           </button>
