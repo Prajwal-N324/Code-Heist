@@ -1,40 +1,44 @@
 import Head from 'next/head'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 
 const LEVEL_OVERVIEW = [
-  { code: 'L-01', name: 'Abstraction', tag: 'trace public → private' },
-  { code: 'L-02', name: 'Encapsulation', tag: 'follow the setters' },
-  { code: 'L-03', name: 'Inheritance', tag: 'child overrides parent' },
-  { code: 'L-04', name: 'Polymorphism', tag: 'same method, right class' }
+  { code: 'L-01', name: 'Abstraction', tag: 'Concept: Abstraction — Solve to secure the fragment.' },
+  { code: 'L-02', name: 'Encapsulation', tag: 'Concept: Encapsulation — Solve to secure the fragment.' },
+  { code: 'L-03', name: 'Inheritance', tag: 'Concept: Inheritance — Solve to secure the fragment.' },
+  { code: 'L-04', name: 'Polymorphism', tag: 'Concept: Polymorphism — Solve to secure the fragment.' }
 ]
 
 export default function Home() {
   const router = useRouter()
+  const [keyBuffer, setKeyBuffer] = useState('')
 
   useEffect(() => {
     const secretSequence = 'heistadmin'
-    let buffer = ''
 
     const handleKeyDown = (event) => {
+      const active = document.activeElement
+      if (
+        active?.tagName === 'INPUT' ||
+        active?.tagName === 'TEXTAREA' ||
+        (active instanceof HTMLElement && active.isContentEditable)
+      ) {
+        return
+      }
+
       const key = event.key.toLowerCase()
       if (key.length !== 1 || key < 'a' || key > 'z') {
         return
       }
 
-      buffer += key
-      if (!secretSequence.startsWith(buffer)) {
-        buffer = key
-      }
-
-      if (buffer === secretSequence) {
-        router.push('/admin/leaderboard')
-        buffer = ''
-      }
-
-      if (buffer.length > secretSequence.length) {
-        buffer = buffer.slice(-secretSequence.length)
-      }
+      setKeyBuffer((prev) => {
+        const next = (prev + key).slice(-10)
+        if (next === secretSequence || next.endsWith(secretSequence)) {
+          localStorage.setItem('admin_auth', 'true')
+          router.push('/admin/leaderboard')
+        }
+        return next
+      })
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -111,7 +115,7 @@ export default function Home() {
         </div>
 
         <div className="rules-section">
-          <div className="rules-title">RULES OF ENGAGEMENT</div>
+          <div className="rules-title">RULES</div>
           <ul className="rules-list">
             <li>Digital breach unlocks the physical campus location.</li>
             <li>Collect the physical hint letter at each site to progress.</li>
