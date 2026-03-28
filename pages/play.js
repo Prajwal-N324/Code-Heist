@@ -431,11 +431,12 @@ export default function Play() {
     setStatus('Analyzing logic...')
 
     try {
+      const currentRoundId = `round-${currentRound}`
       const response = await fetch('/api/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          roundId: currentRound.toString(),
+          roundId: currentRoundId,
           userSubmission: answer
         })
       })

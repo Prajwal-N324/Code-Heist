@@ -1,87 +1,81 @@
-import { Groq } from "groq-sdk";
+import { Groq } from 'groq-sdk'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
-// The updated challenge database for CODE HEIST
 const CHALLENGES = {
-  "round-1": { 
-    answer: "HEIST RELAY: NORTH-WING-5", 
-    hint_context: "Location in the North Wing, digit 5." 
-  },
-  "round-2": { 
-    answer: "WEST_ARCHIVE_3", 
-    hint_context: "Archive location in the West, digit 3." 
-  },
-  "round-3": { 
-    answer: "SECTOR: 25_W_H", 
-    hint_context: "Specific sector code with W and H." 
-  },
-  "round-4": { 
-    answer: "CODE HEIST KEY: NEXU", 
-    hint_context: "The final key, sounds like connection." 
-  }
-};
+  'round-1': { answer: 'HEIST RELAY: NORTH-WING-5', context: 'North Wing 5' },
+  'round-2': { answer: 'WEST_ARCHIVE_3', context: 'West Archive 3' },
+  'round-3': { answer: 'SECTOR: 25_W_H', context: 'Sector 25 WH' },
+  'round-4': { answer: 'CODE HEIST KEY: NEXU', context: 'Key: NEXU' }
+}
 
 export default async function handler(req, res) {
-  // 1. Only allow POST requests
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: "Method Not Allowed" });
+    return res.status(405).json({ error: 'Method Not Allowed' })
+  }
+
+  const { roundId, userSubmission } = req.body || {}
+  const challenge = CHALLENGES[roundId]
+
+  if (!challenge) {
+    return res.status(404).json({ error: 'Round not found' })
   }
 
   try {
-    const { roundId, userSubmission } = req.body;
-    const correctData = CHALLENGES[roundId];
+    const systemPrompt = `You are the CODE HEIST Overseer.
+Compare the participant answer to the hidden correct answer.
 
-    // 2. Validate Round ID
-    if (!correctData) {
-      return res.status(404).json({ error: "Round not found" });
-    }
+HIDDEN_CORRECT_ANSWER: "${challenge.answer}"
 
-    // 3. System Prompt for Llama 3.3
-    const systemPrompt = `
-      You are the CODE HEIST AI Overseer. 
-      Compare the Participant_Answer to the Hidden_Correct_Answer.
-      
-      HIDDEN_CORRECT_ANSWER: "${correctData.answer}"
-      
-      RULES:
-      1. If the answer is 100% correct (ignore case/spacing/punctuation), status: "CORRECT" and unlocked: true.
-      2. If the answer is very close (1-2 chars off or minor typo), status: "CLOSE", unlocked: false. Provide a 3-word cryptic hint related to: ${correctData.hint_context}.
-      3. Otherwise, status: "INCORRECT", unlocked: false, hint: null.
-      4. NEVER reveal the actual Hidden_Correct_Answer in your hint.
-      
-      OUTPUT ONLY VALID JSON: {"status": "string", "hint": "string|null", "unlocked": boolean}
-    `;
+Rules:
+1. If the participant answer matches the hidden correct answer exactly (ignore case, extra spaces, and punctuation), return status: "CORRECT", hint: null, unlocked: true.
+2. If the participant answer is very close (a small typo or off by 1-2 characters), return status: "CLOSE", unlocked: false, and provide a short, cryptic hint related to: ${challenge.context}.
+3. Otherwise return status: "INCORRECT", hint: null, unlocked: false.
+4. Do not reveal the hidden correct answer in the hint.
 
-    // 4. Call Groq API
+Respond only with valid JSON {"status": "CORRECT" | "CLOSE" | "INCORRECT", "hint": string | null, "unlocked": boolean}.`
+
     const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile", // Using 70b for better reasoning during the fest
+      model: 'llama-3.3-70b-versatile',
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Participant_Answer: "${userSubmission}"` }
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Participant_Answer: "${userSubmission || ''}"` }
       ],
-      response_format: { type: "json_object" },
-      temperature: 0.1, 
-    });
+      response_format: { type: 'json_object' },
+      temperature: 0.1
+    })
 
-    const content = response.choices[0].message.content;
-    if (!content) throw new Error("Empty response from LLM");
-    
-    let result = JSON.parse(content);
-    
-    // 5. Final Safety: Check if the AI leaked the answer in its hint
-    if (result.hint && result.hint.toLowerCase().includes(correctData.answer.toLowerCase().split(':')[0].trim())) {
-        result.hint = "You are incredibly close! Double check your spelling.";
+    const content = response.choices?.[0]?.message?.content
+    if (!content) {
+      throw new Error('Empty response from Groq')
     }
 
-    return res.status(200).json(result);
+    const payload = typeof content === 'string' ? JSON.parse(content) : content
 
+    if (!payload || !payload.status) {
+      throw new Error('Invalid JSON payload from Groq')
+    }
+
+    if (payload.hint && typeof payload.hint === 'string') {
+      const normalizedAnswer = challenge.answer.toLowerCase().replace(/[^a-z0-9]/g, '')
+      const normalizedHint = payload.hint.toLowerCase().replace(/[^a-z0-9]/g, '')
+      if (normalizedHint.includes(normalizedAnswer)) {
+        payload.hint = 'You are incredibly close! Check your spelling instead.'
+      }
+    }
+
+    return res.status(200).json({
+      status: payload.status,
+      hint: payload.hint ?? null,
+      unlocked: Boolean(payload.unlocked)
+    })
   } catch (error) {
-    console.error("Judge Error:", error);
-    return res.status(500).json({ 
-      status: "ERROR", 
-      message: "Overseer offline. Check server logs.",
-      unlocked: false 
-    });
+    console.error('Judge Error:', error)
+    return res.status(500).json({
+      status: 'ERROR',
+      hint: null,
+      unlocked: false,
+      message: 'Overseer offline. Check server logs.'
+    })
   }
 }
