@@ -27,6 +27,7 @@ export default function Leaderboard() {
   const [generatedAccessCode, setGeneratedAccessCode] = useState('')
   const [registrationStatus, setRegistrationStatus] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
+  const [showAccessModal, setShowAccessModal] = useState(false)
 
   useEffect(() => {
     const authValue = typeof window !== 'undefined' ? window.localStorage.getItem('admin_auth') : null
@@ -133,19 +134,19 @@ export default function Leaderboard() {
     setConfigStatus('Ready to create a new round.')
   }
 
-  const generateAccessKey = (teamName) => {
-    const cleaned = (teamName || 'HEIST')
+  const generateHeistCode = (teamName) => {
+    const normalized = (teamName || 'HEIST')
       .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, ' ')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
+      .replace(/[^A-Z]/g, '')
+      .padEnd(3, 'X')
+      .slice(0, 3)
 
-    const first = (cleaned[0] || 'HEIS').slice(0, 4).padEnd(4, 'X')
-    const second = (cleaned[1] || Math.floor(Date.now() / 1000).toString(36).toUpperCase().slice(-4)).slice(0, 4).padEnd(4, 'X')
-    const salt = Array.from({ length: 4 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]).join('')
+    const hexSuffix = Number(Date.now() % 0x10000)
+      .toString(16)
+      .toUpperCase()
+      .padStart(4, '0')
 
-    return `${first}-${second}-${salt}`
+    return `${normalized}-${hexSuffix}`
   }
 
   const handleCopyAccessCode = async () => {
@@ -167,71 +168,44 @@ export default function Leaderboard() {
     }
 
     setIsRegistering(true)
-    setRegistrationStatus('Checking for duplicate teams...')
+    setRegistrationStatus('Checking team availability...')
 
-    const normalizeCheck = (result) => result.status === 'fulfilled' && result.value?.data && !result.value.error
-
-    const duplicateChecks = await Promise.allSettled([
-      supabase.from('teams').select('id').eq('name', teamName).maybeSingle(),
-      supabase.from('teams').select('id').eq('team_name', teamName).maybeSingle()
+    const [{ data: duplicateName, error: duplicateNameError }, { data: duplicateTeam, error: duplicateTeamError }] = await Promise.all([
+      supabase.from('teams').select('id').eq('team_name', teamName).maybeSingle(),
+      supabase.from('teams').select('id').eq('name', teamName).maybeSingle()
     ])
 
-    if (duplicateChecks.some(normalizeCheck)) {
+    if (duplicateNameError || duplicateTeamError) {
+      setRegistrationStatus('Unable to verify team name.')
+      setIsRegistering(false)
+      return
+    }
+
+    if (duplicateName || duplicateTeam) {
       setRegistrationStatus('A team with that name already exists. Use a different name.')
       setIsRegistering(false)
       return
     }
 
-    let accessCode = generateAccessKey(teamName)
-    let collision = false
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const codeChecks = await Promise.allSettled([
-        supabase.from('teams').select('id').eq('code', accessCode).maybeSingle(),
-        supabase.from('teams').select('id').eq('access_code', accessCode).maybeSingle()
-      ])
-      if (!codeChecks.some(normalizeCheck)) {
-        collision = false
-        break
-      }
-      collision = true
-      accessCode = generateAccessKey(teamName)
-    }
-
-    if (collision) {
-      setRegistrationStatus('Unable to generate a unique access key. Try again.')
-      setIsRegistering(false)
-      return
-    }
-
+    const accessCode = generateHeistCode(teamName)
     const payload = {
       team_name: teamName,
       access_code: accessCode,
       name: teamName,
       code: accessCode,
-      current_round: 1,
-      letters_collected: '',
-      score: 0
+      current_round: 1
     }
 
-    let insertResult = await supabase.from('teams').insert(payload)
-    if (insertResult.error) {
-      const fallbackPayload = {
-        name: teamName,
-        code: accessCode,
-        current_round: 1,
-        letters_collected: '',
-        score: 0
-      }
-      const fallbackResult = await supabase.from('teams').insert(fallbackPayload)
-      if (fallbackResult.error) {
-        setRegistrationStatus('Registration failed: ' + fallbackResult.error.message)
-        setIsRegistering(false)
-        return
-      }
+    const { error: insertError } = await supabase.from('teams').insert(payload)
+    if (insertError) {
+      setRegistrationStatus('Registration failed: ' + insertError.message)
+      setIsRegistering(false)
+      return
     }
 
     setGeneratedAccessCode(accessCode)
     setRegistrationStatus('Team registered successfully. Access key ready.')
+    setShowAccessModal(true)
     setNewTeamName('')
     setIsRegistering(false)
   }
@@ -542,6 +516,24 @@ export default function Leaderboard() {
             </div>
           </div>
 
+          {showAccessModal && (
+            <div className="modal-backdrop">
+              <div className="modal-card">
+                <div className="modal-header">Team Registered</div>
+                <div className="modal-copy">Copy the new access key and share it with the team immediately.</div>
+                <div className="access-key-modal">{generatedAccessCode}</div>
+                <div className="modal-actions">
+                  <button type="button" className="btn-primary" onClick={handleCopyAccessCode}>
+                    Copy Key
+                  </button>
+                  <button type="button" className="btn-hint-side" onClick={() => setShowAccessModal(false)}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="table-wrap neon-glow" style={{ marginTop: '24px' }}>
             <table className="leaderboard-table">
               <thead>
@@ -657,6 +649,112 @@ export default function Leaderboard() {
         }
 
         .access-label {
+          font-size: 0.75rem;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: #9bb3c1;
+          margin-bottom: 10px;
+          display: block;
+        }
+
+        .access-key {
+          font-family: var(--mono);
+          font-size: 1rem;
+          letter-spacing: 0.16em;
+          padding: 14px 16px;
+          background: rgba(0, 0, 0, 0.16);
+          border-radius: 16px;
+          color: #ffffff;
+          margin-bottom: 12px;
+          word-break: break-all;
+        }
+
+        .access-key-modal {
+          font-family: var(--mono);
+          font-size: 1.25rem;
+          letter-spacing: 0.2em;
+          padding: 18px 20px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 18px;
+          color: #ffffff;
+          text-align: center;
+          margin: 18px 0;
+        }
+
+        .modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.75);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 50;
+          padding: 20px;
+        }
+
+        .modal-card {
+          max-width: 480px;
+          width: 100%;
+          padding: 28px;
+          background: rgba(2, 7, 13, 0.98);
+          border: 1px solid rgba(0, 230, 118, 0.18);
+          border-radius: 24px;
+          box-shadow: 0 0 80px rgba(0, 230, 118, 0.15);
+        }
+
+        .modal-header {
+          font-family: var(--head);
+          font-size: 1.2rem;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          margin-bottom: 14px;
+          color: #ffffff;
+        }
+
+        .modal-copy {
+          color: #9bb3c1;
+          line-height: 1.8;
+          margin-bottom: 18px;
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .btn-secondary {
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          color: #d9e3ea;
+          padding: 12px 18px;
+          border-radius: 999px;
+          cursor: pointer;
+          transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.22);
+        }
+
+        .btn-primary {
+          background: rgba(0, 230, 118, 0.16);
+          border: 1px solid rgba(0, 230, 118, 0.24);
+          color: #ffffff;
+          padding: 12px 18px;
+          border-radius: 999px;
+          cursor: pointer;
+          transition: background 0.2s, border-color 0.2s;
+        }
+
+        .btn-primary:hover {
+          background: rgba(0, 230, 118, 0.24);
+        }
+
+        .terminal-panel {
           font-size: 0.75rem;
           letter-spacing: 1.5px;
           text-transform: uppercase;
