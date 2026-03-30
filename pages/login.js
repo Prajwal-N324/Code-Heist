@@ -44,7 +44,7 @@ export default function LoginPage() {
         <div className="login-intro">
           <span className="intro-label">RESTRICTED ACCESS</span>
           <h1 className="login-title">CODE HEIST</h1>
-          <p className="login-subtitle">PRESENTED BY VIGYAN.IO</p>
+          <p className="login-subtitle"><span className="presented-label">PRESENTED BY</span> <strong>VIGYAN.IO</strong></p>
           <p className="login-tagline">JAVA & OOP COMMUNITY</p>
           <p className="login-hint">INHERIT THE CLUES · OVERRIDE THE COMPETITION</p>
         </div>

@@ -301,6 +301,16 @@ a {
   mix-blend-mode: screen;
   pointer-events: none;
   z-index: 2;
+  animation: scanlineMove 10s linear infinite;
+}
+
+@keyframes scanlineMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 44px;
+  }
 }
 
 .particle-layer {
@@ -425,27 +435,42 @@ body {
 
 .login-subtitle {
   margin: 0;
-  color: var(--accent);
-  font-family: var(--ui);
-  letter-spacing: 0.4em;
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  font-family: var(--mono);
+  letter-spacing: 0.5em;
   text-transform: uppercase;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  color: rgba(0, 230, 118, 0.9);
+}
+
+.presented-label {
+  opacity: 0.75;
+  letter-spacing: 0.6em;
+  font-weight: 400;
+}
+
+.login-subtitle strong {
+  font-family: var(--head);
+  color: var(--green);
+  letter-spacing: 0.2em;
 }
 
 .login-tagline {
   margin: 0;
   color: #ffb74d;
   font-family: var(--ui);
-  letter-spacing: 0.26em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .login-hint {
   margin: 0;
   color: var(--muted2);
   font-family: var(--mono);
-  letter-spacing: 0.2em;
+  letter-spacing: 0.3em;
   font-size: 0.85rem;
 }
 
