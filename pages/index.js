@@ -32,7 +32,7 @@ export default function Landing() {
           <div className="land-line" />
 
           <div className="action-hub">
-            <Link href="/login" className="start-btn">
+            <Link href="/auth-login" className="start-btn">
               LOGIN TO SYSTEM
             </Link>
             <Link href="/home" className="secondary-link">VIEW MISSION BRIEFING</Link>

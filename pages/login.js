@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import { supabase } from '../lib/supabaseClient'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const [teamName, setTeamName] = useState('')
   const [accessCode, setAccessCode] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -16,21 +18,48 @@ export default function LoginPage() {
     setAccessCode(sessionStorage.getItem('ch_access_code') || '')
   }, [])
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
+    setError('')
+    setLoading(true)
+
     const team = String(teamNumber || '').trim().toUpperCase()
     const name = String(teamName || '').trim()
     const code = String(accessCode || '').trim()
 
     if (!team || !name || !code) {
       setError('Team number, team name, and access code are required.')
+      setLoading(false)
       return
     }
 
-    sessionStorage.setItem('ch_team', team)
-    sessionStorage.setItem('ch_team_name', name)
-    sessionStorage.setItem('ch_access_code', code)
-    router.push('/play')
+    try {
+      // Check if team already exists
+      const { data: existingTeam, error: queryError } = await supabase
+        .from('team_config')
+        .select('*')
+        .eq('team_id', team)
+        .single()
+
+      if (queryError && queryError.code !== 'PGRST116') {
+        throw queryError
+      }
+
+      if (existingTeam) {
+        // Team exists, redirect to admin dashboard
+        localStorage.setItem('admin_auth', 'true')
+        localStorage.setItem('adminAuthTime', new Date().getTime().toString())
+        setIsLoggedIn(true)
+        loadConfig()
+      } else {
+        setError('⬛ Access denied. Wrong password or invalid team.')
+        setPassword('')
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError('⬛ Connection error. Please try again.')
+      setPassword('')
+    }
   }
 
   return (
@@ -100,8 +129,8 @@ export default function LoginPage() {
 
             {error ? <div className="form-error">{error}</div> : null}
 
-            <button type="submit" className="primary-btn login-submit">
-              INITIATE ACCESS
+            <button type="submit" className="primary-btn login-submit" disabled={loading}>
+              {loading ? 'REGISTERING...' : 'INITIATE ACCESS'}
             </button>
 
             <div className="login-note-row">

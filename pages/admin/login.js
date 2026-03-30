@@ -21,7 +21,7 @@ export default function AdminLogin() {
 
       // Redirect to admin dashboard
       setTimeout(() => {
-        router.push('/admin')
+        router.push('/admin/dashboard')
       }, 500)
     } else {
       setError('Invalid access code. Access denied.')
