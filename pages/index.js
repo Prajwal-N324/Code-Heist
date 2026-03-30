@@ -289,8 +289,14 @@ export default function Landing() {
         .land-content {
           position: relative;
           z-index: 10;
-          max-width: 700px;
+          max-width: 620px;
           width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto;
+          padding: 0 20px;
         }
 
         /* Glows */
