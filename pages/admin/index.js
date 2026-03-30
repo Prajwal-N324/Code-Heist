@@ -12,51 +12,54 @@ export default function AdminHub() {
   return (
     <>
       <Head>
-        <title>Admin Hub — Code Heist</title>
+        <title>ADMIN HUB | CODE HEIST</title>
         <meta name="description" content="Admin control center for Code Heist operations." />
       </Head>
 
       <section className="admin-page">
-        <div className="admin-hero">
-          <div>
-            <p className="eyebrow">ADMIN HUB</p>
-            <h1>Operational command for the Code Heist event.</h1>
-            <p>
-              Coordinate recruits, monitor live progress, and dispatch new agents from a secure control
-              panel built for festival deployment.
-            </p>
+        <div className="admin-browser">
+          <div className="auth-window-top">
+            <span className="window-dot" />
+            <span className="window-dot" />
+            <span className="window-dot" />
+            <span className="window-title">ADMIN ACCESS</span>
           </div>
-          <div className="admin-actions">
-            <Link href="/admin/register" className="primary-btn">
-              RECRUIT AGENTS
-            </Link>
-            <Link href="/" className="ghost-btn">
-              RETURN TO GATEWAY
-            </Link>
+
+          <div className="admin-card">
+            <div className="admin-card-head">
+              <p className="eyebrow">COMMAND INTERFACE</p>
+              <h2>Control the festival deployment.</h2>
+              <p>
+                Use the secure admin hub to recruit new agents, supervise game flow, and keep the Code Heist mission
+                moving safely.
+              </p>
+            </div>
+
+            <div className="admin-actions admin-actions-vertical">
+              <Link href="/admin/register" className="primary-btn">
+                RECRUIT AGENTS
+              </Link>
+              <Link href="/" className="ghost-btn">
+                RETURN TO GATEWAY
+              </Link>
+            </div>
+
+            <div className="admin-summary-grid">
+              <article className="glass-panel">
+                <h3>Live Ops</h3>
+                <p>Monitor the event in real time and validate access codes at every checkpoint.</p>
+              </article>
+              <article className="glass-panel">
+                <h3>System Status</h3>
+                <div className="status-pill status-online">ONLINE</div>
+                <p>Fallback authentication is active if the external AI service becomes unavailable.</p>
+              </article>
+              <article className="glass-panel">
+                <h3>Recruitment</h3>
+                <p>The recruit page is gated behind this hub and only available through admin access.</p>
+              </article>
+            </div>
           </div>
-        </div>
-
-        <div className="admin-grid">
-          <article className="glass-panel">
-            <h2>Live Ops</h2>
-            <p>Track incoming teams, verify entry points, and keep the mission flow secure.</p>
-            <ul>
-              <li>Event-safe mode enabled</li>
-              <li>Realtime leaderboard telemetry</li>
-              <li>Agent recruitment workflow</li>
-            </ul>
-          </article>
-
-          <article className="glass-panel">
-            <h2>System Status</h2>
-            <div className="status-pill status-online">ONLINE</div>
-            <p>Game engine ready. AI fallback logic is active when external services are offline.</p>
-          </article>
-
-          <article className="glass-panel">
-            <h2>Access Control</h2>
-            <p>Admin registration is gated behind the hub. Recruit page is only available through this panel.</p>
-          </article>
         </div>
       </section>
     </>

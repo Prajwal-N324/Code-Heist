@@ -43,60 +43,62 @@ export default function AdminRegister() {
   return (
     <>
       <Head>
-        <title>Recruit Agents — Code Heist</title>
+        <title>RECRUIT | CODE HEIST</title>
         <meta name="description" content="Recruit new agents from the admin hub." />
       </Head>
 
       <section className="auth-page">
-        <div className="auth-hero">
-          <p className="eyebrow">RECRUIT AGENTS</p>
-          <h1>Draft new agents for the Code Heist.</h1>
-          <p>
-            This form is only available from the Admin Hub. Register fresh operators and assign clearance levels
-            for live festival duty.
-          </p>
+        <div className="auth-browser">
+          <div className="auth-window-top">
+            <span className="window-dot" />
+            <span className="window-dot" />
+            <span className="window-dot" />
+            <span className="window-title">AGENT REGISTRATION</span>
+          </div>
+
+          <div className="auth-card">
+            <h2>REGISTER NEW OPERATIVE</h2>
+
+            <div className="field-block">
+              <label>AGENT NAME</label>
+              <p className="field-meta">// Field identity</p>
+              <input
+                value={agentName}
+                onChange={(event) => setAgentName(event.target.value)}
+                placeholder="Rogue One"
+              />
+            </div>
+
+            <div className="field-block">
+              <label>CODENAME</label>
+              <p className="field-meta">// Operational alias</p>
+              <input
+                value={agentCodename}
+                onChange={(event) => setAgentCodename(event.target.value)}
+                placeholder="NIGHTFALL"
+              />
+            </div>
+
+            <div className="field-block">
+              <label>CLEARANCE LEVEL</label>
+              <p className="field-meta">//Choose a secure clearance tier</p>
+              <select
+                value={clearance}
+                onChange={(event) => setClearance(event.target.value)}
+              >
+                <option value="01">01 - Field Operative</option>
+                <option value="02">02 - Tactical Support</option>
+                <option value="03">03 - Command</option>
+              </select>
+            </div>
+
+            {message ? <div className="form-success">{message}</div> : null}
+
+            <button type="submit" className="primary-btn">
+              RECRUIT AGENT
+            </button>
+          </div>
         </div>
-
-        <form className="auth-card" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="agentName">Agent Name</label>
-            <input
-              id="agentName"
-              value={agentName}
-              onChange={(event) => setAgentName(event.target.value)}
-              placeholder="Rogue One"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="agentCodename">Agent Codename</label>
-            <input
-              id="agentCodename"
-              value={agentCodename}
-              onChange={(event) => setAgentCodename(event.target.value)}
-              placeholder="NIGHTFALL"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="clearance">Clearance Level</label>
-            <select
-              id="clearance"
-              value={clearance}
-              onChange={(event) => setClearance(event.target.value)}
-            >
-              <option value="01">01 - Field Operative</option>
-              <option value="02">02 - Tactical Support</option>
-              <option value="03">03 - Command</option>
-            </select>
-          </div>
-
-          {message ? <div className="form-success">{message}</div> : null}
-
-          <button type="submit" className="primary-btn">
-            RECRUIT AGENT
-          </button>
-        </form>
       </section>
     </>
   )
