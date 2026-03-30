@@ -11,93 +11,32 @@ export default function Landing() {
       </Head>
 
       <section className="landing-container">
-        {/* Background Atmosphere */}
         <div className="bg-scene" />
-        <div className="skyline" />
         <div className="particles">
           {[...Array(6)].map((_, i) => <div key={i} className="particle" />)}
         </div>
 
-        {/* Admin Access Button - Top Right */}
         <div className="admin-corner">
           <Link href="/admin/login" className="admin-btn">
             ADMIN ACCESS
           </Link>
         </div>
 
-        {/* Main Landing Content */}
         <div className="land-glow" />
-        <div className="land-glow2" />
 
         <div className="land-content">
-          <div className="classified-badge">🔒 Classified · Event Access Only</div>
-
+          <div className="system-status">// SYSTEM ONLINE</div>
           <h1 className="nexus-logo">CODE HEIST</h1>
-          <p className="logo-sub">Inherit the Clues · Override the Competition</p>
-
+          <p className="logo-sub">VIGYAN.IO · JAVA & OOP CHALLENGE</p>
+          
           <div className="land-line" />
 
-          {/* Film Strip Intro */}
-          <div className="film-intro-wrapper">
-            <div className="film-strip-top">
-              {[...Array(8)].map((_, i) => <div key={i} className="film-hole" />)}
-            </div>
-            <div className="film-frame">
-              The city never sleeps. Neither does the <em>CODE HEIST system</em>.<br /><br />
-              Four elite engineers locked down the most powerful codebase on the planet — each one burying a fragment of the master key inside a <strong>different OOP concept</strong>.<br /><br />
-              One holds it in <em>abstraction</em>. One encrypted it behind <em>encapsulation</em>. The third passed it through <em>inheritance</em>. The last hid it in <em>polymorphism</em>.<br /><br />
-              You've been hired for one job: <strong>crack all four levels, collect the letters, assemble the key.</strong><br />
-              The clock is ticking. The AI guardian is watching. <em>Don't get caught.</em>
-            </div>
-            <div className="film-strip-bottom">
-              {[...Array(8)].map((_, i) => <div key={i} className="film-hole" />)}
-            </div>
+          <div className="action-hub">
+            <Link href="/login" className="start-btn">
+              LOGIN TO SYSTEM
+            </Link>
+            <Link href="/home" className="secondary-link">VIEW MISSION BRIEFING</Link>
           </div>
-
-          {/* Level Grid */}
-          <div className="level-grid">
-            <div className="lv-pill">
-              <div className="lv-pill-icon">🔒</div>
-              <div>
-                <div className="lv-n">L-01</div>
-                <div className="lv-name">Abstraction</div>
-                <div className="lv-tag">trace public → private</div>
-                <div className="lv-key">key char = N · Private Vault</div>
-              </div>
-            </div>
-            <div className="lv-pill">
-              <div className="lv-pill-icon">📦</div>
-              <div>
-                <div className="lv-n">L-02</div>
-                <div className="lv-name">Encapsulation</div>
-                <div className="lv-tag">follow the setters</div>
-                <div className="lv-key">key char = E · Jumbled Code Box</div>
-              </div>
-            </div>
-            <div className="lv-pill">
-              <div className="lv-pill-icon">🧬</div>
-              <div>
-                <div className="lv-n">L-03</div>
-                <div className="lv-name">Inheritance</div>
-                <div className="lv-tag">child overrides parent</div>
-                <div className="lv-key">key char = X · Clue Chain</div>
-              </div>
-            </div>
-            <div className="lv-pill">
-              <div className="lv-pill-icon">🎭</div>
-              <div>
-                <div className="lv-n">L-04</div>
-                <div className="lv-name">Polymorphism</div>
-                <div className="lv-tag">same method, right class</div>
-                <div className="lv-key">key char = U · Synonym Lock</div>
-              </div>
-            </div>
-          </div>
-
-          <Link href="/login" className="start-btn">
-            INITIATE BREACH
-          </Link>
-          <p className="land-note">Final word = N·E·X·U → key to unlock CODE HEIST · Works on any browser</p>
         </div>
       </section>
 
@@ -252,11 +191,23 @@ export default function Landing() {
           100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
         }
 
+        .system-status {
+          font-family: var(--head);
+          font-size: 10px;
+          color: var(--green);
+          letter-spacing: 4px;
+          margin-bottom: 16px;
+          opacity: 0.8;
+          animation: blink 2s infinite;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
         /* Admin Corner Button */
         .admin-corner {
           position: fixed;
           top: 24px;
-          right: 24px;
+          left: 24px;
           z-index: 100;
         }
 
@@ -283,6 +234,12 @@ export default function Landing() {
           color: var(--amber);
           border-color: var(--amber);
           box-shadow: 0 0 20px rgba(255, 171, 64, 0.3);
+        }
+
+        .action-hub {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
         }
 
         /* Main Content */
@@ -367,12 +324,12 @@ export default function Landing() {
           font-family: var(--ui);
           font-size: clamp(10px, 2vw, 14px);
           color: var(--amber);
-          letter-spacing: 6px;
+          letter-spacing: 4px;
           font-weight: 400;
           text-transform: uppercase;
           margin-top: 8px;
-          margin-bottom: 44px;
-          text-shadow: 0 0 20px rgba(255,171,64,.4);
+          margin-bottom: 60px;
+          opacity: 0.8;
         }
 
         .land-line {
@@ -381,93 +338,6 @@ export default function Landing() {
           background: linear-gradient(90deg, transparent, var(--green2), var(--amber), var(--green2), transparent);
           margin: 0 auto 44px;
           opacity: 0.6;
-        }
-
-        /* Film Strip */
-        .film-intro-wrapper {
-          max-width: 620px;
-          margin: 0 auto 44px;
-          position: relative;
-        }
-
-        .film-strip-top,
-        .film-strip-bottom {
-          display: flex;
-          gap: 4px;
-          margin: 6px 0;
-        }
-
-        .film-hole {
-          width: 16px;
-          height: 10px;
-          border: 1px solid rgba(255,171,64,.2);
-          border-radius: 2px;
-          background: rgba(255,171,64,.04);
-          flex-shrink: 0;
-        }
-
-        .film-frame {
-          background: rgba(8,13,16,0.8);
-          border: 1px solid rgba(255,171,64,.2);
-          border-left: 4px solid var(--amber);
-          padding: 20px 24px;
-          font-family: var(--ui);
-          font-size: clamp(13px, 2.1vw, 15px);
-          color: var(--muted2);
-          line-height: 1.95;
-          font-weight: 400;
-          text-align: left;
-          position: relative;
-        }
-
-        .film-frame::before {
-          content: '▶  SCENE 01';
-          display: block;
-          font-family: var(--head);
-          font-size: 8px;
-          color: var(--amber);
-          letter-spacing: 3px;
-          margin-bottom: 10px;
-          opacity: 0.7;
-        }
-
-        .film-frame em {
-          color: var(--green);
-          font-style: normal;
-          font-weight: 600;
-        }
-
-        .film-frame strong {
-          color: var(--amber);
-          font-style: normal;
-        }
-
-        /* Level Grid */
-        .level-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          max-width: 500px;
-          width: 100%;
-          margin: 0 auto 52px;
-        }
-
-        .lv-pill {
-          background: rgba(8,13,16,0.75);
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          padding: 12px 16px;
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          text-align: left;
-          transition: border-color 0.25s, box-shadow 0.25s;
-          backdrop-filter: blur(4px);
-        }
-
-        .lv-pill:hover {
-          border-color: var(--border2);
-          box-shadow: 0 0 20px rgba(0,230,118,.06);
         }
 
         .lv-pill-icon {
@@ -538,18 +408,19 @@ export default function Landing() {
           box-shadow: 0 0 80px rgba(0,230,118,.9);
         }
 
-        .start-btn:active {
-          transform: translateY(0);
-        }
-
-        .land-note {
-          margin-top: 22px;
+        .secondary-link {
+          display: inline-block;
+          color: var(--muted2);
+          text-decoration: none;
           font-size: 11px;
-          color: var(--muted);
-          letter-spacing: 0.5px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          transition: color 0.3s;
         }
 
-        @media (max-width: 768px) {
+        .secondary-link:hover { color: var(--blue); }
+
+        @media (max-width: 480px) {
           .level-grid {
             grid-template-columns: 1fr;
           }
