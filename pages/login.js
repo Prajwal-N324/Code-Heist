@@ -41,26 +41,28 @@ export default function LoginPage() {
       </Head>
 
       <main className="login-shell">
-        <div className="login-intro">
-          <span className="intro-label">RESTRICTED ACCESS</span>
-          <h1 className="login-title">CODE HEIST</h1>
-          <p className="login-subtitle"><span className="presented-label">PRESENTED BY</span> <strong>VIGYAN.IO</strong></p>
-          <p className="login-tagline">JAVA & OOP COMMUNITY</p>
-          <p className="login-hint">INHERIT THE CLUES · OVERRIDE THE COMPETITION</p>
-        </div>
-
-        <div className="auth-browser login-card">
-          <div className="auth-window-top">
-            <span className="window-dot" />
-            <span className="window-dot" />
-            <span className="window-dot" />
-            <span className="window-title">TEAM AUTHENTICATION PORTAL</span>
+        <div className="login-page-area">
+          <div className="login-intro">
+            <div className="restricted-banner">A RESTRICTED ACCESS</div>
+            <h1 className="login-title">CODE HEIST</h1>
+            <p className="presented-by">PRESENTED BY</p>
+            <p className="brand-name">VIGYAN.IO</p>
+            <p className="login-tagline">JAVA & OOP COMMUNITY</p>
+            <p className="login-hint">INHERIT THE CLUES · OVERRIDE THE COMPETITION</p>
           </div>
 
-          <form className="auth-card" onSubmit={handleSubmit}>
-            <div className="auth-card-head">
-              <h2>ENTER YOUR CREDENTIALS</h2>
+          <div className="auth-browser login-card">
+            <div className="auth-window-top">
+              <span className="window-dot" />
+              <span className="window-dot" />
+              <span className="window-dot" />
+              <span className="window-title">TEAM AUTHENTICATION PORTAL</span>
             </div>
+
+            <form className="auth-card" onSubmit={handleSubmit}>
+              <div className="auth-card-head">
+                <h2>ENTER YOUR CREDENTIALS</h2>
+              </div>
 
             <div className="field-block">
               <label>TEAM NUMBER</label>
@@ -109,13 +111,14 @@ export default function LoginPage() {
             </div>
           </form>
         </div>
+      </div>
 
-        <div className="login-status-bar">
-          <span>AWAITING AUTHENTICATION</span>
-          <span className="status-separator">|</span>
-          <span>SESSION ACTIVE</span>
-        </div>
-      </main>
+      <div className="login-status-bar">
+        <span>AWAITING AUTHENTICATION</span>
+        <span className="status-separator">|</span>
+        <span>SESSION ACTIVE</span>
+      </div>
+    </main>
     </>
   )
 }
