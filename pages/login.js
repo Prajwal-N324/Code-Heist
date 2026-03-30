@@ -20,7 +20,7 @@ export default function LoginPage() {
     event.preventDefault()
     const team = String(teamNumber || '').trim().toUpperCase()
     const name = String(teamName || '').trim()
-    const code = String(accessCode || '').trim().toUpperCase()
+    const code = String(accessCode || '').trim()
 
     if (!team || !name || !code) {
       setError('Team number, team name, and access code are required.')
@@ -40,8 +40,16 @@ export default function LoginPage() {
         <meta name="description" content="Team authentication portal for Code Heist." />
       </Head>
 
-      <section className="auth-page">
-        <div className="auth-browser">
+      <main className="login-shell">
+        <div className="login-intro">
+          <span className="intro-label">RESTRICTED ACCESS</span>
+          <h1 className="login-title">CODE HEIST</h1>
+          <p className="login-subtitle">PRESENTED BY VIGYAN.IO</p>
+          <p className="login-tagline">JAVA & OOP COMMUNITY</p>
+          <p className="login-hint">INHERIT THE CLUES · OVERRIDE THE COMPETITION</p>
+        </div>
+
+        <div className="auth-browser login-card">
           <div className="auth-window-top">
             <span className="window-dot" />
             <span className="window-dot" />
@@ -49,8 +57,11 @@ export default function LoginPage() {
             <span className="window-title">TEAM AUTHENTICATION PORTAL</span>
           </div>
 
-          <div className="auth-card">
-            <h2>ENTER YOUR CREDENTIALS</h2>
+          <form className="auth-card" onSubmit={handleSubmit}>
+            <div className="auth-card-head">
+              <h2>ENTER YOUR CREDENTIALS</h2>
+            </div>
+
             <div className="field-block">
               <label>TEAM NUMBER</label>
               <p className="field-meta">// Provided by the organisers</p>
@@ -87,12 +98,24 @@ export default function LoginPage() {
 
             {error ? <div className="form-error">{error}</div> : null}
 
-            <button type="submit" className="primary-btn">
+            <button type="submit" className="primary-btn login-submit">
               INITIATE ACCESS
             </button>
-          </div>
+
+            <div className="login-note-row">
+              <span>SYS::AUTH_v3.1.4</span>
+              <span>Java & OOP Community</span>
+              <span>SECURE</span>
+            </div>
+          </form>
         </div>
-      </section>
+
+        <div className="login-status-bar">
+          <span>AWAITING AUTHENTICATION</span>
+          <span className="status-separator">|</span>
+          <span>SESSION ACTIVE</span>
+        </div>
+      </main>
     </>
   )
 }
