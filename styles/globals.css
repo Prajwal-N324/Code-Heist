@@ -623,13 +623,31 @@ body {
 
 .auth-browser,
 .admin-browser {
-  width: min(760px, 100%);
-  background: rgba(3, 10, 15, 0.72);
-  border: 1px solid rgba(0, 230, 118, 0.14);
+  width: min(880px, 100%);
+  background: rgba(3, 10, 15, 0.82);
+  border: 1px solid rgba(0, 230, 118, 0.18);
   border-radius: 28px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 32px 110px rgba(0, 0, 0, 0.34);
   overflow: hidden;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 96px 24px 56px;
+}
+
+.admin-actions-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.full-width {
+  width: 100%;
+  justify-content: center;
 }
 
 .auth-window-top {
@@ -672,6 +690,36 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(0, 230, 118, 0.95);
+  background: rgba(0, 230, 118, 0.08);
+  width: fit-content;
+}
+
+.admin-status-footer {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  color: rgba(207, 216, 220, 0.65);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.24em;
+  margin-top: 8px;
+}
+
+.status-separator {
+  opacity: 0.4;
 }
 
 .field-block {
@@ -723,17 +771,29 @@ body {
   margin-top: 12px;
 }
 
-.admin-summary-grid {
+.admin-panel-grid {
   display: grid;
   gap: 18px;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, minmax(200px, 1fr));
 }
 
-.admin-summary-grid .glass-panel {
-  padding: 22px;
+.admin-panel-grid .glass-panel {
+  padding: 24px;
 }
 
-.admin-summary-grid h3 {
+.admin-panel-grid .panel-label {
+  display: inline-flex;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--green);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.admin-panel-grid h3 {
   margin: 0 0 10px;
   font-family: var(--head);
   color: var(--accent);
