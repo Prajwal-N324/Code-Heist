@@ -1,5 +1,4 @@
 import Head from 'next/head'
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 
 const LEVEL_OVERVIEW = [
@@ -11,41 +10,6 @@ const LEVEL_OVERVIEW = [
 
 export default function Home() {
   const router = useRouter()
-  const [keyBuffer, setKeyBuffer] = useState('')
-
-  useEffect(() => {
-    const secretSequence = 'heistadmin'
-
-    const handleKeyDown = (event) => {
-      const active = document.activeElement
-      if (
-        active?.tagName === 'INPUT' ||
-        active?.tagName === 'TEXTAREA' ||
-        (active instanceof HTMLElement && active.isContentEditable)
-      ) {
-        return
-      }
-
-      const key = event.key.toLowerCase()
-      if (key.length !== 1 || key < 'a' || key > 'z') {
-        return
-      }
-
-      setKeyBuffer((prev) => {
-        const next = (prev + key).slice(-10)
-        if (next === secretSequence || next.endsWith(secretSequence)) {
-          localStorage.setItem('admin_auth', 'true')
-          router.push('/admin/leaderboard')
-        }
-        return next
-      })
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [router])
 
   function handleGuestStart() {
     router.push('/play?round=1')
@@ -128,20 +92,6 @@ export default function Home() {
           INITIATE BREACH
         </button>
       </main>
-
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          right: 0,
-          width: '1px',
-          height: '1px',
-          opacity: 0,
-          pointerEvents: 'auto',
-          zIndex: 9999,
-        }}
-        onClick={() => router.push('/admin/leaderboard')}
-      />
     </>
   )
 }
