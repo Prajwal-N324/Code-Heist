@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { supabase } from '../lib/supabaseClient';
+import { db } from '../lib/firebaseClient';
+import { collection, addDoc } from 'firebase/firestore';
 
 const registerStyles = `
 :root {
@@ -557,7 +558,7 @@ export default function Register() {
       const adminAuth = localStorage.getItem('admin_auth') === 'true';
       const authTime = localStorage.getItem('adminAuthTime');
       const now = new Date().getTime();
-      
+
       // Admin session valid for 24 hours
       if (adminAuth && authTime && (now - parseInt(authTime) < 86400000)) {
         setIsAuthorized(true);
@@ -644,7 +645,7 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -657,26 +658,17 @@ export default function Register() {
       const teamId = `TEAM-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
       const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-      // Register team in Supabase
-      const { data, error } = await supabase
-        .from('team_config')
-        .insert([
-          {
-            team_id: teamId,
-            team_name: formData.teamName,
-            department: formData.department,
-            year: formData.year,
-            team_size: parseInt(formData.teamSize),
-            access_code: accessCode,
-            agents: formData.agents,
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select();
-
-      if (error) {
-        throw error;
-      }
+      // Register team in Firestore
+      await addDoc(collection(db, 'team_config'), {
+        team_id: teamId,
+        team_name: formData.teamName,
+        department: formData.department,
+        year: formData.year,
+        team_size: parseInt(formData.teamSize),
+        access_code: accessCode,
+        agents: formData.agents,
+        created_at: new Date().toISOString()
+      });
 
       setStatus({
         type: 'success',
@@ -716,195 +708,195 @@ export default function Register() {
         </div>
       ) : (
         <>
-      <style>{registerStyles}</style>
+          <style>{registerStyles}</style>
 
-      <div className="laser-grid">
-        <div className="grid-floor" />
-      </div>
-
-      <div className="page">
-        <div className="header">
-          <div className="classified-badge">⚠ AGENT RECRUITMENT ⚠</div>
-          <div className="logo">CODE HEIST</div>
-          <div className="presenter-sub">
-            <span className="pre-label">presented by</span>
-            <span className="pre-name">Java & OOP Community</span>
-          </div>
-          <div className="logo-sub">Inherit the Clues · Override the Competition</div>
-          <div className="divider" />
-        </div>
-
-        <div className="mission-brief">
-          <div className="brief-label">OPERATION BRIEFING</div>
-          <div className="brief-text">
-            The vault is sealed. The clock is running. Four levels of <span>Java & OOP</span> mastery stand between your crew and the ultimate heist.
-            To gain clearance, you must register your squad below. Each team must have <em>2–4 agents</em>.
-            <br /><br />
-            <em>// Only registered agents may participate. Stand by for mission briefing.</em>
-          </div>
-        </div>
-
-        <div className="terminal-card">
-          <div className="terminal-bar">
-            <div className="t-dot red" />
-            <div className="t-dot amber" />
-            <div className="t-dot green" />
-            <span className="terminal-bar-title">SQUAD REGISTRATION TERMINAL</span>
+          <div className="laser-grid">
+            <div className="grid-floor" />
           </div>
 
-          <div className="card-body">
-            <form onSubmit={handleSubmit}>
-              <div className="section-label">SQUAD IDENTITY</div>
+          <div className="page">
+            <div className="header">
+              <div className="classified-badge">⚠ AGENT RECRUITMENT ⚠</div>
+              <div className="logo">CODE HEIST</div>
+              <div className="presenter-sub">
+                <span className="pre-label">presented by</span>
+                <span className="pre-name">Java & OOP Community</span>
+              </div>
+              <div className="logo-sub">Inherit the Clues · Override the Competition</div>
+              <div className="divider" />
+            </div>
 
-              <div className="form-row cols-2">
-                <div className="field">
-                  <label className="field-label">Team Name</label>
-                  <div className="field-hint">// Your crew's codename</div>
-                  <div className="input-wrap">
-                    <input
-                      type="text"
-                      name="teamName"
-                      value={formData.teamName}
-                      onChange={handleInputChange}
-                      placeholder="e.g.  NULL POINTERS"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-                <div className="field">
-                  <label className="field-label">Department</label>
-                  <div className="field-hint">// Your academic division</div>
-                  <div className="input-wrap">
-                    <select name="department" value={formData.department} onChange={handleInputChange} disabled={loading}>
-                      <option value="">— SELECT DEPT —</option>
-                      <option value="CSE">CSE</option>
-                      <option value="ISE">ISE</option>
-                      <option value="ECE">ECE</option>
-                      <option value="EEE">EEE</option>
-                      <option value="ME">ME</option>
-                      <option value="CE">CE</option>
-                      <option value="AIDS">AIDS</option>
-                      <option value="AIML">AIML</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
+            <div className="mission-brief">
+              <div className="brief-label">OPERATION BRIEFING</div>
+              <div className="brief-text">
+                The vault is sealed. The clock is running. Four levels of <span>Java & OOP</span> mastery stand between your crew and the ultimate heist.
+                To gain clearance, you must register your squad below. Each team must have <em>2–4 agents</em>.
+                <br /><br />
+                <em>// Only registered agents may participate. Stand by for mission briefing.</em>
+              </div>
+            </div>
+
+            <div className="terminal-card">
+              <div className="terminal-bar">
+                <div className="t-dot red" />
+                <div className="t-dot amber" />
+                <div className="t-dot green" />
+                <span className="terminal-bar-title">SQUAD REGISTRATION TERMINAL</span>
               </div>
 
-              <div className="form-row cols-2">
-                <div className="field">
-                  <label className="field-label">Year</label>
-                  <div className="field-hint">// Current academic year</div>
-                  <div className="input-wrap">
-                    <select name="year" value={formData.year} onChange={handleInputChange} disabled={loading}>
-                      <option value="">— SELECT YEAR —</option>
-                      <option value="1">1st Year</option>
-                      <option value="2">2nd Year</option>
-                      <option value="3">3rd Year</option>
-                      <option value="4">4th Year</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="field">
-                  <label className="field-label">Team Size</label>
-                  <div className="field-hint">// Number of agents (2–4)</div>
-                  <div className="input-wrap">
-                    <select name="teamSize" value={formData.teamSize} onChange={handleInputChange} disabled={loading}>
-                      <option value="">— SELECT SIZE —</option>
-                      <option value="2">2 Agents</option>
-                      <option value="3">3 Agents</option>
-                      <option value="4">4 Agents</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
+              <div className="card-body">
+                <form onSubmit={handleSubmit}>
+                  <div className="section-label">SQUAD IDENTITY</div>
 
-              <div className="section-divider" />
-
-              {formData.agents.length > 0 && (
-                <>
-                  <div className="section-label">AGENT PROFILES</div>
-
-                  {formData.agents.map((agent, i) => (
-                    <div key={i} className="agent-card">
-                      <div className="agent-card-header">
-                        <div className="agent-number">{`AGENT-${String(i + 1).padStart(2, '0')}`}</div>
-                        <div className="agent-role">// Agent profile</div>
-                      </div>
-                      <div className="form-row cols-2">
-                        <div className="field">
-                          <label className="field-label">Full Name</label>
-                          <div className="field-hint">// Agent's real identity</div>
-                          <div className="input-wrap">
-                            <input
-                              type="text"
-                              value={agent.name}
-                              onChange={(e) => handleAgentChange(i, 'name', e.target.value)}
-                              placeholder="e.g.  ALEX CIPHER"
-                              disabled={loading}
-                            />
-                          </div>
-                        </div>
-                        <div className="field">
-                          <label className="field-label">USN</label>
-                          <div className="field-hint">// University Serial Number</div>
-                          <div className="input-wrap">
-                            <input
-                              type="text"
-                              value={agent.usn}
-                              onChange={(e) => handleAgentChange(i, 'usn', e.target.value.toUpperCase())}
-                              placeholder="e.g.  1XX22CS001"
-                              disabled={loading}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="form-row cols-2">
-                        <div className="field">
-                          <label className="field-label">Email</label>
-                          <div className="field-hint">// Contact email</div>
-                          <div className="input-wrap">
-                            <input
-                              type="text"
-                              value={agent.email}
-                              onChange={(e) => handleAgentChange(i, 'email', e.target.value)}
-                              placeholder="e.g.  agent@mail.com"
-                              disabled={loading}
-                            />
-                          </div>
-                        </div>
-                        <div className="field">
-                          <label className="field-label">Phone</label>
-                          <div className="field-hint">// Contact number</div>
-                          <div className="input-wrap">
-                            <input
-                              type="text"
-                              value={agent.phone}
-                              onChange={(e) => handleAgentChange(i, 'phone', e.target.value)}
-                              placeholder="e.g.  +91 XXXXXXXXXX"
-                              disabled={loading}
-                            />
-                          </div>
-                        </div>
+                  <div className="form-row cols-2">
+                    <div className="field">
+                      <label className="field-label">Team Name</label>
+                      <div className="field-hint">// Your crew's codename</div>
+                      <div className="input-wrap">
+                        <input
+                          type="text"
+                          name="teamName"
+                          value={formData.teamName}
+                          onChange={handleInputChange}
+                          placeholder="e.g.  NULL POINTERS"
+                          disabled={loading}
+                        />
                       </div>
                     </div>
-                  ))}
-                </>
-              )}
+                    <div className="field">
+                      <label className="field-label">Department</label>
+                      <div className="field-hint">// Your academic division</div>
+                      <div className="input-wrap">
+                        <select name="department" value={formData.department} onChange={handleInputChange} disabled={loading}>
+                          <option value="">— SELECT DEPT —</option>
+                          <option value="CSE">CSE</option>
+                          <option value="ISE">ISE</option>
+                          <option value="ECE">ECE</option>
+                          <option value="EEE">EEE</option>
+                          <option value="ME">ME</option>
+                          <option value="CE">CE</option>
+                          <option value="AIDS">AIDS</option>
+                          <option value="AIML">AIML</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
 
-              {status.show && (
-                <div className={`status-msg ${status.type}`}>
-                  {status.message}
-                </div>
-              )}
+                  <div className="form-row cols-2">
+                    <div className="field">
+                      <label className="field-label">Year</label>
+                      <div className="field-hint">// Current academic year</div>
+                      <div className="input-wrap">
+                        <select name="year" value={formData.year} onChange={handleInputChange} disabled={loading}>
+                          <option value="">— SELECT YEAR —</option>
+                          <option value="1">1st Year</option>
+                          <option value="2">2nd Year</option>
+                          <option value="3">3rd Year</option>
+                          <option value="4">4th Year</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="field">
+                      <label className="field-label">Team Size</label>
+                      <div className="field-hint">// Number of agents (2–4)</div>
+                      <div className="input-wrap">
+                        <select name="teamSize" value={formData.teamSize} onChange={handleInputChange} disabled={loading}>
+                          <option value="">— SELECT SIZE —</option>
+                          <option value="2">2 Agents</option>
+                          <option value="3">3 Agents</option>
+                          <option value="4">4 Agents</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
 
-              <button type="submit" className="btn-submit" disabled={loading}>
-                <span>{loading ? '◆ REGISTERING... ◆' : '⚡ ENLIST SQUAD ⚡'}</span>
-              </button>
-            </form>
+                  <div className="section-divider" />
+
+                  {formData.agents.length > 0 && (
+                    <>
+                      <div className="section-label">AGENT PROFILES</div>
+
+                      {formData.agents.map((agent, i) => (
+                        <div key={i} className="agent-card">
+                          <div className="agent-card-header">
+                            <div className="agent-number">{`AGENT-${String(i + 1).padStart(2, '0')}`}</div>
+                            <div className="agent-role">// Agent profile</div>
+                          </div>
+                          <div className="form-row cols-2">
+                            <div className="field">
+                              <label className="field-label">Full Name</label>
+                              <div className="field-hint">// Agent's real identity</div>
+                              <div className="input-wrap">
+                                <input
+                                  type="text"
+                                  value={agent.name}
+                                  onChange={(e) => handleAgentChange(i, 'name', e.target.value)}
+                                  placeholder="e.g.  ALEX CIPHER"
+                                  disabled={loading}
+                                />
+                              </div>
+                            </div>
+                            <div className="field">
+                              <label className="field-label">USN</label>
+                              <div className="field-hint">// University Serial Number</div>
+                              <div className="input-wrap">
+                                <input
+                                  type="text"
+                                  value={agent.usn}
+                                  onChange={(e) => handleAgentChange(i, 'usn', e.target.value.toUpperCase())}
+                                  placeholder="e.g.  1XX22CS001"
+                                  disabled={loading}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="form-row cols-2">
+                            <div className="field">
+                              <label className="field-label">Email</label>
+                              <div className="field-hint">// Contact email</div>
+                              <div className="input-wrap">
+                                <input
+                                  type="text"
+                                  value={agent.email}
+                                  onChange={(e) => handleAgentChange(i, 'email', e.target.value)}
+                                  placeholder="e.g.  agent@mail.com"
+                                  disabled={loading}
+                                />
+                              </div>
+                            </div>
+                            <div className="field">
+                              <label className="field-label">Phone</label>
+                              <div className="field-hint">// Contact number</div>
+                              <div className="input-wrap">
+                                <input
+                                  type="text"
+                                  value={agent.phone}
+                                  onChange={(e) => handleAgentChange(i, 'phone', e.target.value)}
+                                  placeholder="e.g.  +91 XXXXXXXXXX"
+                                  disabled={loading}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {status.show && (
+                    <div className={`status-msg ${status.type}`}>
+                      {status.message}
+                    </div>
+                  )}
+
+                  <button type="submit" className="btn-submit" disabled={loading}>
+                    <span>{loading ? '◆ REGISTERING... ◆' : '⚡ ENLIST SQUAD ⚡'}</span>
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
         </>
       )}
     </>

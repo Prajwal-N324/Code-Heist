@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../../lib/supabaseClient'
+import { db } from '../../lib/firebaseClient'
+import { collection, query, orderBy, onSnapshot, getDocs, setDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 
 export default function Leaderboard() {
   const router = useRouter()
@@ -47,18 +48,14 @@ export default function Leaderboard() {
     let mounted = true
 
     async function loadTeams() {
-      // FIX: Changed 'code' to 'access_code' and 'name' to 'team_name'
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id, access_code, team_name, score, current_round')
-        .order('score', { ascending: false })
-
-      if (error) {
+      try {
+        const q = query(collection(db, 'teams'), orderBy('score', 'desc'))
+        const snapshot = await getDocs(q)
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        if (mounted) setTeams(data || [])
+      } catch (err) {
         setError('Unable to fetch leaderboard.')
-        return
       }
-
-      if (mounted) setTeams(data || [])
     }
 
     async function loadConfig() {
@@ -87,18 +84,12 @@ export default function Leaderboard() {
     loadTeams()
     loadConfig()
 
-    channel = supabase
-      .channel('leaderboard')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'teams' },
-        (payload) => {
-          const updatedTeam = payload.new
-          if (!updatedTeam) {
-            setTeams((prev) => prev.filter((team) => team.id !== payload.old?.id))
-            return
-          }
-
+    channel = onSnapshot(collection(db, 'teams'), (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        const updatedTeam = { id: change.doc.id, ...change.doc.data() }
+        if (change.type === 'removed') {
+          setTeams((prev) => prev.filter((team) => team.id !== updatedTeam.id))
+        } else {
           setTeams((prev) => {
             const found = prev.find((team) => team.id === updatedTeam.id)
             if (found) {
@@ -109,13 +100,13 @@ export default function Leaderboard() {
             return [...prev, updatedTeam].sort((a, b) => b.score - a.score)
           })
         }
-      )
-      .subscribe()
+      })
+    })
 
     return () => {
       mounted = false
       if (channel) {
-        supabase.removeChannel(channel)
+        channel() // Unsubscribe from snapshot
       }
     }
   }, [authorized])
@@ -191,7 +182,7 @@ export default function Leaderboard() {
     }
 
     const accessCode = generateHeistCode(teamName)
-    
+
     // FIX: Payload strictly matches your Supabase schema: 'team_name' and 'access_code'
     const payload = {
       team_name: teamName,
@@ -551,7 +542,7 @@ export default function Leaderboard() {
               </thead>
               <tbody>
                 {roundConfig.map((round) => (
-                  <tr key={round.id} onClick={() => openRoundEditor(round)} style={{cursor: 'pointer'}}>
+                  <tr key={round.id} onClick={() => openRoundEditor(round)} style={{ cursor: 'pointer' }}>
                     <td>{round.set_id || 'N/A'}</td>
                     <td>{round.round_number}</td>
                     <td>{round.mission_title || '—'}</td>

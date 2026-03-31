@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { supabase } from '../lib/supabaseClient';
+import { db } from '../lib/firebaseClient';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const loginStyles = `
 :root {
@@ -395,15 +396,15 @@ export default function AuthLogin() {
         return;
       }
 
-      // Verify credentials against Supabase
-      const { data, error } = await supabase
-        .from('team_config')
-        .select('*')
-        .eq('team_id', credentials.teamId)
-        .eq('access_code', credentials.accessCode)
-        .single();
+      // Verify credentials against Firestore
+      const q = query(collection(db, 'team_config'),
+        where('team_id', '==', credentials.teamId),
+        where('access_code', '==', credentials.accessCode)
+      );
+      const querySnapshot = await getDocs(q);
+      const data = !querySnapshot.empty ? querySnapshot.docs[0].data() : null;
 
-      if (error || !data) {
+      if (!data) {
         setStatus({
           type: 'error',
           message: '◆ INVALID CREDENTIALS ◆',
@@ -416,7 +417,7 @@ export default function AuthLogin() {
       // Success - store session and redirect
       sessionStorage.setItem('teamId', data.team_id);
       sessionStorage.setItem('teamName', data.team_name);
-      
+
       setStatus({
         type: 'success',
         message: '✓ ACCESS GRANTED',

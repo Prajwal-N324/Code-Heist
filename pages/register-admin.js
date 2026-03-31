@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { db } from '@/lib/firebaseClient'
 
 export default function RegisterAdmin() {
   useEffect(() => {
@@ -602,8 +602,8 @@ export default function RegisterAdmin() {
         <div className="success-sub">Welcome to the Heist</div>
         <div className="success-id" id="reg-id-display">REG-XXXXXXXX</div>
         <div className="success-msg">
-          Your crew has been cleared for infiltration. Stand by for the mission briefing.<br/>
-          <em style={{color:'var(--amber)'}}>Inherit the Clues · Override the Competition</em>
+          Your crew has been cleared for infiltration. Stand by for the mission briefing.<br />
+          <em style={{ color: 'var(--amber)' }}>Inherit the Clues · Override the Competition</em>
         </div>
         <div className="success-bar"><div className="success-bar-fill" id="success-bar-fill"></div></div>
       </div>
@@ -630,7 +630,7 @@ export default function RegisterAdmin() {
             The vault is sealed. The clock is running. Four levels of <span>Java &amp; OOP</span> mastery stand between your crew and the ultimate heist.
             To gain clearance, you must register your squad below. Each team must have <em>2–4 agents</em>.
             Once enlisted, your team credentials will be issued by the organizers.
-            <br/><br/>
+            <br /><br />
             <em>// Only registered agents may participate. No walk-ins on the day of the operation.</em>
           </div>
         </div>
@@ -750,7 +750,7 @@ export default function RegisterAdmin() {
                     <label className="field-label" htmlFor="usn-1">USN</label>
                     <div className="field-hint">// University Serial Number</div>
                     <div className="input-wrap">
-                      <input type="text" id="usn-1" placeholder="e.g.  1XX22CS001" autoComplete="off" spellCheck="false" style={{textTransform:'uppercase'}} />
+                      <input type="text" id="usn-1" placeholder="e.g.  1XX22CS001" autoComplete="off" spellCheck="false" style={{ textTransform: 'uppercase' }} />
                     </div>
                     <div className="field-error" id="err-usn-1"></div>
                   </div>
@@ -776,7 +776,7 @@ export default function RegisterAdmin() {
                     <label className="field-label" htmlFor="usn-2">USN</label>
                     <div className="field-hint">// University Serial Number</div>
                     <div className="input-wrap">
-                      <input type="text" id="usn-2" placeholder="e.g.  1XX22CS002" autoComplete="off" spellCheck="false" style={{textTransform:'uppercase'}} />
+                      <input type="text" id="usn-2" placeholder="e.g.  1XX22CS002" autoComplete="off" spellCheck="false" style={{ textTransform: 'uppercase' }} />
                     </div>
                     <div className="field-error" id="err-usn-2"></div>
                   </div>
@@ -784,7 +784,7 @@ export default function RegisterAdmin() {
               </div>
 
               {/* Agent 3 */}
-              <div className="agent-card" id="agent-card-3" style={{display:'none'}}>
+              <div className="agent-card" id="agent-card-3" style={{ display: 'none' }}>
                 <div className="agent-card-header">
                   <div className="agent-number">AGENT-03</div>
                   <div className="agent-role">// Tech Specialist</div>
@@ -802,7 +802,7 @@ export default function RegisterAdmin() {
                     <label className="field-label" htmlFor="usn-3">USN</label>
                     <div className="field-hint">// University Serial Number</div>
                     <div className="input-wrap">
-                      <input type="text" id="usn-3" placeholder="e.g.  1XX22CS003" autoComplete="off" spellCheck="false" style={{textTransform:'uppercase'}} />
+                      <input type="text" id="usn-3" placeholder="e.g.  1XX22CS003" autoComplete="off" spellCheck="false" style={{ textTransform: 'uppercase' }} />
                     </div>
                     <div className="field-error" id="err-usn-3"></div>
                   </div>
@@ -810,7 +810,7 @@ export default function RegisterAdmin() {
               </div>
 
               {/* Agent 4 */}
-              <div className="agent-card" id="agent-card-4" style={{display:'none'}}>
+              <div className="agent-card" id="agent-card-4" style={{ display: 'none' }}>
                 <div className="agent-card-header">
                   <div className="agent-number">AGENT-04</div>
                   <div className="agent-role">// Tactical Support</div>
@@ -828,7 +828,7 @@ export default function RegisterAdmin() {
                     <label className="field-label" htmlFor="usn-4">USN</label>
                     <div className="field-hint">// University Serial Number</div>
                     <div className="input-wrap">
-                      <input type="text" id="usn-4" placeholder="e.g.  1XX22CS004" autoComplete="off" spellCheck="false" style={{textTransform:'uppercase'}} />
+                      <input type="text" id="usn-4" placeholder="e.g.  1XX22CS004" autoComplete="off" spellCheck="false" style={{ textTransform: 'uppercase' }} />
                     </div>
                     <div className="field-error" id="err-usn-4"></div>
                   </div>
@@ -842,18 +842,20 @@ export default function RegisterAdmin() {
             <div className="section-label">CONFIRM &amp; ENLIST</div>
 
             {/* Summary preview */}
-            <div id="reg-summary" style={{display:'none',
+            <div id="reg-summary" style={{
+              display: 'none',
               background: 'rgba(0,230,118,.03)', border: '1px solid var(--border2)', borderRadius: '4px',
               padding: '14px 18px', marginBottom: '20px', fontSize: '11px', color: 'var(--muted2)',
-              lineHeight: '2', letterSpacing: '1px'}}>
+              lineHeight: '2', letterSpacing: '1px'
+            }}>
             </div>
 
             <button className="btn-submit" onClick={() => submitRegistration()}>
               <span>⬡ &nbsp; ENLIST YOUR SQUAD &nbsp; ⬡</span>
             </button>
 
-            <div style={{textAlign:'center', marginTop:'14px', fontSize:'10px', color:'var(--muted)', letterSpacing:'2px', lineHeight:'1.8'}}>
-              // By enlisting, your squad agrees to uphold the code of conduct.<br/>
+            <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '10px', color: 'var(--muted)', letterSpacing: '2px', lineHeight: '1.8' }}>
+              // By enlisting, your squad agrees to uphold the code of conduct.<br />
               Once registered, team credentials will be shared by the organizers.
             </div>
 

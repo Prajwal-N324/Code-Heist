@@ -1,7 +1,8 @@
 import Head from 'next/head'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../lib/supabaseClient'
+import { db } from '../lib/firebaseClient'
+import { collection, query, where, getDocs, doc, updateDoc, limit } from 'firebase/firestore'
 
 const LEVELS = [
   {
@@ -310,13 +311,13 @@ export default function Play() {
 
   const activeRound = roundData
     ? {
-        ...baseLevel,
-        title: roundData.mission_title || baseLevel.title,
-        story: roundData.mission_text || roundData.story || baseLevel.story,
-        codeSnippet: roundData.code_snippet || baseLevel.codeSnippet,
-        location: roundData.location_reveal || roundData.campus_location || baseLevel.location,
-        correct_answer: roundData.correct_answer || baseLevel.correct_answer
-      }
+      ...baseLevel,
+      title: roundData.mission_title || baseLevel.title,
+      story: roundData.mission_text || roundData.story || baseLevel.story,
+      codeSnippet: roundData.code_snippet || baseLevel.codeSnippet,
+      location: roundData.location_reveal || roundData.campus_location || baseLevel.location,
+      correct_answer: roundData.correct_answer || baseLevel.correct_answer
+    }
     : baseLevel
 
   const pageVariables = {
@@ -331,20 +332,22 @@ export default function Play() {
     setLoading(true)
     setStatus('Verifying team...')
 
-    supabase
-      .from('teams')
-      .select('id,code,question_set_id,current_round,letters_collected,completed_at')
-      .eq('code', teamCodeParam)
-      .single()
-      .then(({ data, error }) => {
+    getDocs(query(collection(db, 'teams'), where('code', '==', teamCodeParam), limit(1)))
+      .then((snapshot) => {
         if (!mounted) return
-        if (error || !data) {
+        if (snapshot.empty) {
           setStatus('Team not found. Continuing in guest mode.')
           setTeam(null)
         } else {
+          const data = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
           setTeam(data)
           setStatus(`Team ${data.code} loaded.`)
         }
+      })
+      .catch((error) => {
+        if (!mounted) return
+        setStatus('Team not found. Continuing in guest mode.')
+        setTeam(null)
       })
       .finally(() => {
         if (mounted) setLoading(false)
@@ -357,14 +360,14 @@ export default function Play() {
 
   useEffect(() => {
     async function loadActiveSet() {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'active_set_id')
-        .single()
-
-      if (!error && data?.value) {
-        setActiveSetId(data.value)
+      try {
+        const q = query(collection(db, 'settings'), where('key', '==', 'active_set_id'), limit(1))
+        const snapshot = await getDocs(q)
+        if (!snapshot.empty) {
+          setActiveSetId(snapshot.docs[0].data().value)
+        }
+      } catch (err) {
+        console.error(err)
       }
     }
     loadActiveSet()
@@ -376,16 +379,15 @@ export default function Play() {
 
     setRoundLoading(true)
     async function loadRoundData() {
-      const { data, error } = await supabase
-        .from('rounds')
-        .select('id,set_id,round_number,mission_title,mission_text,code_snippet,correct_answer,hint_text,campus_location,location_reveal')
-        .eq('set_id', setId)
-        .eq('round_number', currentRound)
-        .single()
-
-      if (!error && data) {
-        setRoundData(data)
-      } else {
+      try {
+        const q = query(collection(db, 'rounds'), where('set_id', '==', setId), where('round_number', '==', currentRound), limit(1))
+        const snapshot = await getDocs(q)
+        if (!snapshot.empty) {
+          setRoundData({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() })
+        } else {
+          setRoundData(null)
+        }
+      } catch (err) {
         setRoundData(null)
       }
       setRoundLoading(false)
@@ -418,7 +420,7 @@ export default function Play() {
     try {
       // Ensure currentRound matches the "round-X" format in judge.js
       const currentRoundId = `round-${currentRound}`
-      
+
       const response = await fetch('/api/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -482,11 +484,11 @@ export default function Play() {
       updatePayload.completed_at = new Date().toISOString()
     }
 
-    const { error } = await supabase.from('teams').update(updatePayload).eq('id', team.id)
-    if (error) {
-      setHintStatus({ type: 'error', message: 'Sync failed: ' + error.message })
-    } else {
+    try {
+      await updateDoc(doc(db, 'teams', team.id), updatePayload)
       setHintStatus({ type: 'success', message: 'Progress saved. Next level initialized.' })
+    } catch (error) {
+      setHintStatus({ type: 'error', message: 'Sync failed: ' + error.message })
     }
   }
 
@@ -540,7 +542,7 @@ export default function Play() {
           </div>
           <div className="lv-concept">🔒 CONCEPT: {activeRound.concept}</div>
         </div>
-        
+
         <div className="split">
           <div className="left-panel">
             <div className="story-box">
@@ -594,7 +596,7 @@ export default function Play() {
                 {activeRound.submitLabel}
               </button>
             </div>
-            
+
             <div className="info-card">
               <div className="info-label">Campus Location Reveal</div>
               <div className="info-copy" style={{ opacity: isUnlocked ? 1 : 0.6 }}>

@@ -1,7 +1,8 @@
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../lib/supabaseClient'
+import { db } from '../lib/firebaseClient'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -35,15 +36,9 @@ export default function LoginPage() {
 
     try {
       // Check if team already exists
-      const { data: existingTeam, error: queryError } = await supabase
-        .from('team_config')
-        .select('*')
-        .eq('team_id', team)
-        .single()
-
-      if (queryError && queryError.code !== 'PGRST116') {
-        throw queryError
-      }
+      const q = query(collection(db, 'team_config'), where('team_id', '==', team));
+      const querySnapshot = await getDocs(q);
+      const existingTeam = !querySnapshot.empty ? querySnapshot.docs[0].data() : null;
 
       if (existingTeam) {
         // Team exists, redirect to admin dashboard
@@ -93,61 +88,61 @@ export default function LoginPage() {
                 <h2>ENTER YOUR CREDENTIALS</h2>
               </div>
 
-            <div className="field-block">
-              <label>TEAM NUMBER</label>
-              <p className="field-meta">// Provided by the organisers</p>
-              <input
-                value={teamNumber}
-                onChange={(event) => setTeamNumber(event.target.value)}
-                placeholder="e.g. TEAM-07"
-                autoComplete="off"
-              />
-            </div>
+              <div className="field-block">
+                <label>TEAM NUMBER</label>
+                <p className="field-meta">// Provided by the organisers</p>
+                <input
+                  value={teamNumber}
+                  onChange={(event) => setTeamNumber(event.target.value)}
+                  placeholder="e.g. TEAM-07"
+                  autoComplete="off"
+                />
+              </div>
 
-            <div className="field-block">
-              <label>TEAM NAME</label>
-              <p className="field-meta">// Your team's name</p>
-              <input
-                value={teamName}
-                onChange={(event) => setTeamName(event.target.value)}
-                placeholder="e.g. THE DEBUGGERS"
-                autoComplete="off"
-              />
-            </div>
+              <div className="field-block">
+                <label>TEAM NAME</label>
+                <p className="field-meta">// Your team's name</p>
+                <input
+                  value={teamName}
+                  onChange={(event) => setTeamName(event.target.value)}
+                  placeholder="e.g. THE DEBUGGERS"
+                  autoComplete="off"
+                />
+              </div>
 
-            <div className="field-block">
-              <label>ACCESS CODE</label>
-              <p className="field-meta">// Provided by the organisers</p>
-              <input
-                type="password"
-                value={accessCode}
-                onChange={(event) => setAccessCode(event.target.value)}
-                placeholder=".........."
-                autoComplete="off"
-              />
-            </div>
+              <div className="field-block">
+                <label>ACCESS CODE</label>
+                <p className="field-meta">// Provided by the organisers</p>
+                <input
+                  type="password"
+                  value={accessCode}
+                  onChange={(event) => setAccessCode(event.target.value)}
+                  placeholder=".........."
+                  autoComplete="off"
+                />
+              </div>
 
-            {error ? <div className="form-error">{error}</div> : null}
+              {error ? <div className="form-error">{error}</div> : null}
 
-            <button type="submit" className="primary-btn login-submit" disabled={loading}>
-              {loading ? 'REGISTERING...' : 'INITIATE ACCESS'}
-            </button>
+              <button type="submit" className="primary-btn login-submit" disabled={loading}>
+                {loading ? 'REGISTERING...' : 'INITIATE ACCESS'}
+              </button>
 
-            <div className="login-note-row">
-              <span>SYS::AUTH_v3.1.4</span>
-              <span>Java & OOP Community</span>
-              <span>SECURE</span>
-            </div>
-          </form>
+              <div className="login-note-row">
+                <span>SYS::AUTH_v3.1.4</span>
+                <span>Java & OOP Community</span>
+                <span>SECURE</span>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
 
-      <div className="login-status-bar">
-        <span>AWAITING AUTHENTICATION</span>
-        <span className="status-separator">|</span>
-        <span>SESSION ACTIVE</span>
-      </div>
-    </main>
+        <div className="login-status-bar">
+          <span>AWAITING AUTHENTICATION</span>
+          <span className="status-separator">|</span>
+          <span>SESSION ACTIVE</span>
+        </div>
+      </main>
     </>
   )
 }

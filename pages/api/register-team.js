@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabaseClient'
+import { db } from '@/lib/firebaseClient'
+import { collection, addDoc } from 'firebase/firestore'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,31 +14,26 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
-    // Insert registration into Supabase
-    const { data, error } = await supabase
-      .from('team_registrations')
-      .insert([
-        {
-          reg_id: reg_id,
-          team_name: team_name,
-          department: department,
-          year: year,
-          agents: agents,
-          registered_at: new Date().toISOString(),
-        }
-      ])
-      .select()
+    // Insert registration into Firestore
+    try {
+      const docRef = await addDoc(collection(db, 'team_registrations'), {
+        reg_id: reg_id,
+        team_name: team_name,
+        department: department,
+        year: year,
+        agents: agents,
+        registered_at: new Date().toISOString(),
+      })
 
-    if (error) {
-      console.error('Supabase error:', error)
+      return res.status(200).json({
+        success: true,
+        message: 'Team registered successfully',
+        data: [{ id: docRef.id, reg_id: reg_id }]
+      })
+    } catch (error) {
+      console.error('Firebase error:', error)
       return res.status(400).json({ error: error.message || 'Failed to register team' })
     }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Team registered successfully',
-      data: data
-    })
 
   } catch (error) {
     console.error('API error:', error)
