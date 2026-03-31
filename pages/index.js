@@ -145,6 +145,7 @@ export default function Landing() {
           padding: 24px 16px;
           text-align: center;
           z-index: 3;
+          gap: 0;
         }
 
         /* Skyline */
@@ -244,6 +245,7 @@ export default function Landing() {
           align-items: center;
           justify-content: center;
           width: 100%;
+          margin: 0 auto;
         }
 
         /* Main Content */
@@ -251,8 +253,12 @@ export default function Landing() {
           position: relative;
           z-index: 10;
           max-width: 700px;
-          width: min(100%, 700px);
+          width: 100%;
           margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
         }
 
         /* Glows */
@@ -338,7 +344,8 @@ export default function Landing() {
         }
 
         .land-line {
-          width: 320px;
+          width: 100%;
+          max-width: 320px;
           height: 1px;
           background: linear-gradient(90deg, transparent, var(--green2), var(--amber), var(--green2), transparent);
           margin: 0 auto 44px;
