@@ -136,12 +136,13 @@ export default function Landing() {
 
         .landing-container {
           position: relative;
+          width: 100%;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 24px;
+          padding: 24px 16px;
           text-align: center;
           z-index: 3;
         }
@@ -240,6 +241,9 @@ export default function Landing() {
           display: flex;
           flex-direction: column;
           gap: 20px;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
         }
 
         /* Main Content */
@@ -247,7 +251,8 @@ export default function Landing() {
           position: relative;
           z-index: 10;
           max-width: 700px;
-          width: 100%;
+          width: min(100%, 700px);
+          margin: 0 auto;
         }
 
         /* Glows */
@@ -393,8 +398,7 @@ export default function Landing() {
           box-shadow: 0 0 30px rgba(0,230,118,.4);
           animation: sbp 2.5s ease-in-out infinite;
           text-decoration: none;
-          display: inline-block;
-          margin-bottom: 22px;
+          margin: 0 auto 22px;
         }
 
         @keyframes sbp {
