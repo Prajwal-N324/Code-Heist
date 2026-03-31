@@ -59,25 +59,26 @@ export default function Leaderboard() {
     }
 
     async function loadConfig() {
-      const [{ data: rounds, error: roundsError }, { data: activeSet, error: settingsError }] = await Promise.all([
-        supabase
-          .from('rounds')
-          .select('id,set_id,round_number,mission_title,code_snippet,correct_answer,hint_text,campus_location,location_reveal')
-          .order('set_id', { ascending: true })
-          .order('round_number', { ascending: true }),
-        supabase
-          .from('settings')
-          .select('value')
-          .eq('key', 'active_set_id')
-          .single()
-      ])
+      try {
+        const qRounds = query(collection(db, 'rounds'), orderBy('set_id', 'asc'), orderBy('round_number', 'asc'));
+        const qSettings = query(collection(db, 'settings'), where('key', '==', 'active_set_id'));
 
-      if (!roundsError && rounds) {
-        setRoundConfig(rounds)
-        setSetIds(Array.from(new Set(rounds.map((round) => round.set_id))))
-      }
-      if (!settingsError && activeSet?.value) {
-        setActiveSetId(activeSet.value)
+        const [roundsSnap, settingsSnap] = await Promise.all([
+          getDocs(qRounds),
+          getDocs(qSettings)
+        ]);
+
+        const rounds = roundsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (rounds.length > 0) {
+          setRoundConfig(rounds);
+          setSetIds(Array.from(new Set(rounds.map((round) => round.set_id))));
+        }
+
+        if (!settingsSnap.empty) {
+          setActiveSetId(settingsSnap.docs[0].data().value);
+        }
+      } catch (err) {
+        console.error('Failed to load config', err);
       }
     }
 

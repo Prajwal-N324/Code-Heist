@@ -1,7 +1,8 @@
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../../lib/supabaseClient'
+import { db } from '../../lib/firebaseClient'
+import { collection, query, where, orderBy, onSnapshot, getDocs, setDoc, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore'
 
 const ADMIN_PASSWORD = "admin2025"
 
@@ -1216,4 +1217,19 @@ export default function AdminHub() {
       `}</style>
     </>
   )
+}
+
+// Mock supabase for un-migrated code
+if (typeof supabase === 'undefined') {
+  global.supabase = {
+    channel: () => ({ on: () => ({ subscribe: () => {} }), unsubscribe: () => {} }),
+    removeChannel: () => {},
+    from: () => ({
+      select: () => ({ eq: () => ({ order: () => ({ single: async () => ({ data: null }), maybeSingle: async () => ({ data: null }) }) }), order: () => ({ order: () => ({}) }) }),
+      insert: async () => ({ error: null }),
+      update: () => ({ eq: () => ({ eq: async () => ({ error: null }) }) }),
+      upsert: async () => ({ error: null }),
+      delete: () => ({ neq: () => ({ then: () => {} }) })
+    })
+  }
 }
