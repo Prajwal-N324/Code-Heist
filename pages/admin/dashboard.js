@@ -141,6 +141,19 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(''), 3000)
   }
 
+  const addTeam = () => {
+    const knownTeams = getKnownTeams()
+    let nextNumber = 1
+    while (knownTeams.includes(`TEAM-${String(nextNumber).padStart(2, '0')}`)) {
+      nextNumber++
+    }
+    const newTeamName = `TEAM-${String(nextNumber).padStart(2, '0')}`
+    const newConfig = { ...allConfig, [newTeamName]: JSON.parse(JSON.stringify(DEFAULT_LEVELS)) }
+    saveConfig(newConfig)
+    selectTeam(newTeamName)
+    showToast(`✓ Team ${newTeamName} created with default levels!`)
+  }
+
   // LOGIN SCREEN
   if (!isLoggedIn) {
     return (
@@ -355,6 +368,9 @@ export default function AdminDashboard() {
                 {team}
               </div>
             ))}
+            <button className="add-team-btn" onClick={addTeam} title="Add a new team">
+              + ADD TEAM
+            </button>
           </div>
 
           {/* LEVEL EDITOR */}
@@ -608,6 +624,28 @@ export default function AdminDashboard() {
           background: rgba(0, 230, 118, 0.08);
           border-color: var(--green);
           color: var(--green);
+        }
+
+        .add-team-btn {
+          padding: 6px 18px;
+          background: var(--bg2);
+          border: 1px dashed var(--green);
+          color: var(--green);
+          font-family: var(--mono);
+          font-size: 12px;
+          cursor: pointer;
+          border-radius: 2px;
+          transition: all 0.15s;
+          text-transform: uppercase;
+          font-weight: 700;
+          letter-spacing: 1px;
+        }
+
+        .add-team-btn:hover {
+          background: rgba(0, 230, 118, 0.1);
+          border-color: var(--green);
+          color: #00ffaa;
+          box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
         }
 
         .editor-area {
