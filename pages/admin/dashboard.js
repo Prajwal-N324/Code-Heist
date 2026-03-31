@@ -346,6 +346,7 @@ export default function AdminDashboard() {
           <div className="tb-logo">// ADMIN</div>
           <div className="tb-badge">CODE HEIST CONTROL PANEL</div>
           <div className="tb-spacer"></div>
+          <button className="tb-logout" onClick={() => router.push('/register-admin')} style={{marginRight: '12px'}}>REGISTER</button>
           <button className="tb-logout" onClick={handleLogout}>LOGOUT</button>
         </div>
 

@@ -44,3 +44,22 @@ CREATE TABLE IF NOT EXISTS ch_leaderboard (
   started_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Team Registrations - stores team registration data from the registration form
+CREATE TABLE IF NOT EXISTS team_registrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reg_id TEXT UNIQUE NOT NULL,
+  team_name TEXT NOT NULL,
+  department TEXT NOT NULL,
+  year INTEGER NOT NULL,
+  agents JSONB NOT NULL,
+  registered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for faster queries on registrations
+CREATE INDEX IF NOT EXISTS idx_team_registrations_reg_id ON team_registrations(reg_id);
+CREATE INDEX IF NOT EXISTS idx_team_registrations_team_name ON team_registrations(team_name);
+
+-- Enable realtime on registrations table
+ALTER PUBLICATION supabase_realtime ADD TABLE team_registrations;
