@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODE HEIST — Level 4: Synonym Lock · FINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05080a;--bg2:#080d10;--bg3:#0c1318;
+  --border:#112233;--border2:#1a3344;
+  --green:#00e676;--green2:#00c853;
+  --red:#ff5252;--amber:#ffab40;--blue:#40c4ff;--purple:#b388ff;
+  --text:#cfd8dc;--muted:#37474f;--muted2:#546e7a;
+  --mono:'Share Tech Mono',monospace;--ui:'Rajdhani',sans-serif;--head:'Orbitron',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.05) 3px,rgba(0,0,0,.05) 4px)}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:repeating-linear-gradient(90deg,transparent 0,transparent 46px,rgba(255,82,82,.012) 46px,rgba(255,82,82,.012) 48px),repeating-linear-gradient(180deg,transparent 0,transparent 46px,rgba(255,82,82,.012) 46px,rgba(255,82,82,.012) 48px);animation:gridmove 18s linear infinite}
+@keyframes gridmove{0%{background-position:0 0}100%{background-position:0 48px}}
+.glow-orb1{position:fixed;top:20%;left:10%;width:500px;height:500px;pointer-events:none;background:radial-gradient(ellipse,rgba(255,82,82,.04) 0%,transparent 65%);animation:orb1 7s ease-in-out infinite}
+.glow-orb2{position:fixed;bottom:20%;right:10%;width:400px;height:400px;pointer-events:none;background:radial-gradient(ellipse,rgba(0,230,118,.05) 0%,transparent 65%);animation:orb2 5s ease-in-out infinite}
+@keyframes orb1{0%,100%{transform:scale(1)}50%{transform:scale(1.15) translate(15px,8px)}}
+@keyframes orb2{0%,100%{transform:scale(1)}50%{transform:scale(1.1) translate(-10px,-12px)}}
+
+/* WIN SCREEN */
+.win-screen{display:none;position:fixed;inset:0;z-index:300;background:#000;align-items:center;justify-content:center}
+.win-screen.show{display:flex;animation:wsfade .8s ease}
+@keyframes wsfade{from{opacity:0}to{opacity:1}}
+.win-scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,230,118,.015) 3px,rgba(0,230,118,.015) 4px);pointer-events:none}
+.win-glow{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,230,118,.12) 0%,transparent 60%);pointer-events:none}
+.win-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:18px;max-width:700px;padding:40px 20px;text-align:center}
+.win-classified{font-family:var(--head);font-size:11px;color:var(--red);letter-spacing:8px;border:1px solid var(--red);padding:4px 16px;background:rgba(255,82,82,.07)}
+.win-title{font-family:var(--head);font-size:clamp(36px,8vw,72px);color:var(--green);text-shadow:0 0 80px rgba(0,230,118,.9);letter-spacing:8px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{text-shadow:0 0 60px rgba(0,230,118,.7)}50%{text-shadow:0 0 120px rgba(0,230,118,1)}}
+.win-sub{font-family:var(--ui);font-size:14px;color:var(--amber);letter-spacing:4px}
+.win-key-display{display:flex;gap:20px;justify-content:center;margin:10px 0}
+.win-key-char{display:flex;flex-direction:column;align-items:center;gap:6px}
+.win-char-big{font-family:var(--head);font-size:clamp(40px,8vw,64px);color:var(--green);font-weight:900;text-shadow:0 0 40px rgba(0,230,118,.8);border:2px solid var(--green);width:80px;height:80px;display:flex;align-items:center;justify-content:center;background:rgba(0,230,118,.06)}
+.win-char-src{font-family:var(--mono);font-size:8px;color:var(--muted2);letter-spacing:2px}
+.win-story{font-family:var(--ui);font-size:12px;color:var(--muted2);line-height:2;text-align:left;border:1px solid var(--border);padding:16px;background:rgba(0,0,0,.5)}
+.win-story em{color:var(--amber);font-style:normal}.win-story strong{color:var(--green)}
+.btn-replay{font-family:var(--head);font-size:12px;letter-spacing:4px;color:var(--bg);background:var(--green);border:none;padding:14px 40px;border-radius:4px;cursor:pointer;transition:all .2s;box-shadow:0 0 40px rgba(0,230,118,.6)}
+.btn-replay:hover{background:#00ffaa;transform:translateY(-2px)}
+
+#locked-gate{display:none;position:fixed;inset:0;z-index:999;background:#000;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.gate-icon{font-size:64px}.gate-title{font-family:var(--head);font-size:28px;color:var(--red);letter-spacing:6px}
+.gate-sub{font-family:var(--ui);font-size:15px;color:var(--muted2);text-align:center;line-height:2;max-width:400px}.gate-sub em{color:var(--amber);font-style:normal}
+.btn-back{font-family:var(--head);font-size:11px;letter-spacing:3px;padding:12px 28px;border:1px solid var(--red);color:var(--red);background:transparent;border-radius:4px;cursor:pointer;transition:all .2s}.btn-back:hover{background:rgba(255,82,82,.08)}
+
+#intro-overlay{position:fixed;inset:0;z-index:100;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column}
+#intro-overlay.fade-out{animation:fadeOut 1s forwards}
+@keyframes fadeOut{to{opacity:0;pointer-events:none;visibility:hidden}}
+.scene-label{font-family:var(--head);font-size:9px;color:var(--red);letter-spacing:5px;margin-bottom:20px;opacity:0;animation:fadeIn .6s .5s forwards}
+.scene-text{font-family:var(--ui);font-size:clamp(14px,2.5vw,18px);color:#888;line-height:2;max-width:600px;text-align:center;opacity:0;animation:fadeIn 1s 1s forwards}
+.scene-text em{color:var(--green);font-style:normal}.scene-text strong{color:var(--amber)}
+.skip-intro{position:absolute;bottom:40px;right:40px;font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--muted);padding:6px 16px;border-radius:3px;cursor:pointer;opacity:0;animation:fadeIn .5s 2s forwards;transition:all .2s}.skip-intro:hover{color:var(--text);border-color:var(--text)}
+.film-bar-top,.film-bar-bot{position:absolute;left:0;right:0;height:60px;background:#000;display:flex;gap:6px;align-items:center;padding:0 12px}
+.film-bar-top{top:0}.film-bar-bot{bottom:0}
+.fhole{width:18px;height:11px;border:1px solid #222;border-radius:2px;background:#0a0a0a;flex-shrink:0}
+@keyframes fadeIn{to{opacity:1}}
+
+.main-wrap{position:relative;z-index:3;max-width:1080px;margin:0 auto;padding:12px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--bg2);border:1px solid rgba(255,82,82,.2);border-radius:8px 8px 0 0;flex-wrap:wrap;gap:8px}
+.tb-logo{font-family:var(--head);font-size:12px;color:var(--green);letter-spacing:3px}
+.tb-mission{font-family:var(--ui);font-size:11px;color:var(--red);letter-spacing:1px;font-weight:600}
+.tb-level{font-family:var(--head);font-size:10px;color:var(--muted2);letter-spacing:2px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-right:5px;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.level-banner{padding:14px 18px;background:linear-gradient(90deg,rgba(255,82,82,.06),transparent);border-left:1px solid rgba(255,82,82,.15);border-right:1px solid rgba(255,82,82,.15);border-bottom:1px solid rgba(255,82,82,.2);display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.lv-badge{font-family:var(--head);font-size:24px;font-weight:900;color:var(--red);text-shadow:0 0 30px rgba(255,82,82,.5);line-height:1}
+.lv-info{flex:1}.lv-title{font-family:var(--head);font-size:clamp(14px,3vw,22px);color:var(--red);letter-spacing:2px;font-weight:700}
+.lv-subtitle{font-family:var(--ui);font-size:12px;color:var(--muted2);margin-top:3px;letter-spacing:1px}
+.lv-concept{font-family:var(--mono);font-size:10px;color:var(--amber);padding:3px 10px;border:1px solid rgba(255,171,64,.3);border-radius:3px;background:rgba(255,171,64,.05)}
+.split{display:grid;grid-template-columns:1.1fr 1fr;border-left:1px solid rgba(255,82,82,.1);border-right:1px solid rgba(255,82,82,.1);flex:1}
+@media(max-width:680px){.split{grid-template-columns:1fr}}
+
+.left-panel{border-right:1px solid rgba(255,82,82,.1);display:flex;flex-direction:column}
+.story-box{padding:14px 16px;background:rgba(255,82,82,.02);border-bottom:1px solid rgba(255,82,82,.1)}
+.story-label{font-family:var(--head);font-size:8px;color:var(--red);letter-spacing:4px;margin-bottom:8px}
+.story-text{font-family:var(--ui);font-size:13px;color:var(--muted2);line-height:1.85}
+.story-text em{color:var(--green);font-style:normal}.story-text strong{color:var(--amber)}
+.code-header{padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.code-filename{font-family:var(--ui);font-size:10px;color:var(--muted2);letter-spacing:2px;font-weight:700;text-transform:uppercase}
+.java-tag{font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(64,196,255,.08);color:var(--blue);border:1px solid rgba(64,196,255,.2)}
+.code-scroll{flex:1;overflow-y:auto;padding:14px;background:var(--bg)}
+.code-scroll::-webkit-scrollbar{width:3px}.code-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+pre{font-family:var(--mono);font-size:11px;line-height:1.75;color:#8fbc8f;white-space:pre-wrap;word-break:break-word}
+.kw{color:#ff79c6}.cl{color:#8be9fd}.fn{color:#50fa7b}.st{color:#f1fa8c}.cm{color:#3a5a42;font-style:italic}.nb{color:#bd93f9}
+.hint-box{padding:12px 16px;border-top:1px solid rgba(0,230,118,.1);background:rgba(0,230,118,.015)}
+.hint-label{font-family:var(--head);font-size:8px;color:var(--green2);letter-spacing:3px;margin-bottom:6px}
+.hint-items{display:flex;flex-direction:column;gap:4px}
+.hint-item{font-family:var(--ui);font-size:11px;color:var(--muted2);padding-left:12px;position:relative;line-height:1.5}
+.hint-item::before{content:'›';position:absolute;left:0;color:var(--green);font-weight:700}
+.hint-item em{color:var(--green);font-style:normal}.hint-item strong{color:var(--amber)}
+
+/* RIGHT: editable code panel */
+.right-panel{display:flex;flex-direction:column;background:#040608}
+.editor-header{padding:10px 16px;background:#06080a;border-bottom:1px solid #1a0a0a;display:flex;align-items:center;justify-content:space-between}
+.editor-title{font-family:var(--head);font-size:11px;color:var(--red);letter-spacing:2px}
+.editor-badge{font-size:9px;padding:2px 8px;border-radius:3px;background:rgba(255,82,82,.1);color:var(--red);border:1px solid rgba(255,82,82,.2);letter-spacing:1px}
+.editor-wrap{flex:1;display:flex;flex-direction:column;padding:14px;gap:10px;overflow-y:auto}
+.editor-instruction{font-family:var(--ui);font-size:12px;color:var(--muted2);line-height:1.6;padding:8px 12px;border-left:2px solid var(--red);background:rgba(255,82,82,.03)}
+.editor-instruction em{color:var(--amber);font-style:normal}
+
+/* Editable code block with inline inputs */
+.code-editor-block{background:#020507;border:1px solid var(--border2);border-radius:4px;padding:14px;font-family:var(--mono);font-size:11px;line-height:2;color:#8fbc8f;position:relative}
+.code-editor-block:focus-within{border-color:rgba(255,82,82,.3)}
+.syn-input{display:inline-block;background:#071510;border:1px solid rgba(0,230,118,.3);border-radius:3px;color:#69f0ae;font-family:var(--mono);font-size:11px;padding:1px 8px;outline:none;width:120px;transition:border-color .2s;caret-color:var(--green)}
+.syn-input:focus{border-color:var(--green);background:#061210}
+.syn-input::placeholder{color:#1a3a1a}
+.syn-input.filled{border-color:rgba(0,230,118,.5)}
+
+.result-area{padding:0 14px 14px}
+.result-box{border-radius:4px;padding:14px 16px;display:flex;align-items:center;gap:12px;display:none}
+.result-box.show{display:flex;animation:rfade .3s ease}
+@keyframes rfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.result-box.success{border:1px solid var(--green);background:rgba(0,230,118,.07)}
+.result-box.fail{border:1px solid var(--red);background:rgba(255,82,82,.07)}
+.result-icon{font-size:22px;flex-shrink:0}
+.result-title{font-family:var(--head);font-size:13px;letter-spacing:3px;margin-bottom:3px}
+.result-box.success .result-title{color:var(--green)}.result-box.fail .result-title{color:var(--red)}
+.result-sub{font-family:var(--ui);font-size:11px;color:var(--muted2)}
+.btn-row{display:flex;align-items:center;gap:8px;padding:0 14px 12px;flex-wrap:wrap}
+.btn-submit{font-family:var(--head);font-size:11px;letter-spacing:3px;color:var(--bg);background:var(--red);border:none;padding:10px 24px;border-radius:4px;cursor:pointer;transition:all .2s;box-shadow:0 0 20px rgba(255,82,82,.4);flex:1}
+.btn-submit:hover{background:#ff7070;transform:translateY(-1px)}
+.btn-hint-side{background:transparent;border:1px solid rgba(179,136,255,.25);color:var(--purple);font-size:10px;font-family:var(--mono);padding:10px 14px;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}.btn-hint-side:hover{background:rgba(179,136,255,.05)}
+.btn-next-level{font-family:var(--head);font-size:11px;letter-spacing:3px;color:var(--bg);background:var(--green);border:none;padding:10px 24px;border-radius:4px;cursor:pointer;transition:all .2s;box-shadow:0 0 20px rgba(0,230,118,.5);display:none;width:calc(100% - 28px);margin:0 14px 12px}
+.btn-next-level.show{display:block;animation:rfade .4s ease}.btn-next-level:hover{background:#00ffaa}
+.hint-log{padding:0 14px;flex:1;overflow-y:auto;max-height:120px}
+.hint-log::-webkit-scrollbar{width:3px}.hint-log::-webkit-scrollbar-thumb{background:#1a0a0a}
+.hlog-msg{font-size:11px;line-height:1.6;margin-bottom:6px;animation:rfade .3s ease;word-break:break-word}
+.hlog-msg.hint{color:var(--purple)}.hlog-msg.hint::before{content:'[HNT] ';color:var(--purple);font-weight:bold}
+.hlog-msg.sys{color:var(--muted);font-style:italic}.hlog-msg.load{color:var(--muted);animation:ldot 1.2s infinite}
+@keyframes ldot{0%,100%{opacity:.3}50%{opacity:1}}
+
+.botbar{padding:10px 18px;background:var(--bg2);border:1px solid rgba(255,82,82,.15);border-top:none;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.bot-lv{font-family:var(--ui);font-size:11px;color:var(--muted2);font-weight:600}.bot-lv span{color:var(--red)}
+.bot-hint{font-size:10px;color:var(--muted)}
+.key-preview{display:flex;gap:5px;align-items:center}
+.key-label{font-family:var(--ui);font-size:9px;color:var(--muted);letter-spacing:1px;margin-right:3px}
+.ks{width:28px;height:28px;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:12px;color:var(--muted)}
+.ks.got{border-color:var(--green);color:var(--green);background:rgba(0,230,118,.08);box-shadow:0 0 12px rgba(0,230,118,.3);animation:kpop .6s ease-out}
+.ks.prev-g{border-color:var(--green);color:var(--green);background:rgba(0,230,118,.06)}
+.ks.prev-a{border-color:var(--amber);color:var(--amber);background:rgba(255,171,64,.06)}
+.ks.prev-t{border-color:var(--blue);color:var(--blue);background:rgba(64,196,255,.06)}
+@keyframes kpop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+</style>
+</head>
+<body>
+
+<!-- FINAL WIN SCREEN -->
+<div class="win-screen" id="winScreen">
+  <div class="win-scanlines"></div>
+  <div class="win-glow"></div>
+  <div class="win-content">
+    <div class="win-classified">HEIST COMPLETE</div>
+    <div class="win-title">CODE HEIST</div>
+    <div class="win-sub">ALL FOUR GUARDIANS DEFEATED</div>
+    <div class="win-key-display">
+      <div class="win-key-char"><div class="win-char-big">N</div><div class="win-char-src">ABSTRACTION</div></div>
+      <div class="win-key-char"><div class="win-char-big">E</div><div class="win-char-src">ENCAPSULATION</div></div>
+      <div class="win-key-char"><div class="win-char-big">X</div><div class="win-char-src">INHERITANCE</div></div>
+      <div class="win-key-char"><div class="win-char-big">U</div><div class="win-char-src">POLYMORPHISM</div></div>
+    </div>
+    <div class="win-story">
+      <div><em>N</em> — from abstraction's private vault. The public method revealed what was hidden.</div>
+      <div><em>E</em> — from the jumbled code box. The setters told the truth, the constructor lied.</div>
+      <div><em>X</em> — from the inheritance chain. The child overrode the parent to pass it on.</div>
+      <div><em>U</em> — from polymorphism's synonym lock. Same interface, different decoder — only one synonym unlocked it.</div>
+      <div><strong>N·E·X·U — the key to CODE HEIST, stolen from four guardians. The heist is done.</strong></div>
+    </div>
+    <button class="btn-replay" onclick="replay()">PLAY AGAIN FROM START</button>
+  </div>
+</div>
+
+<div id="locked-gate">
+  <div class="gate-icon">🔒</div>
+  <div class="gate-title">ACCESS DENIED</div>
+  <div class="gate-sub">Level 4 is locked.<br>Complete <em>Level 3 — Inheritance</em> first.<br>The final guardian will not be rushed.</div>
+  <button class="btn-back" onclick="window.location.href='level3-hack_heist.html'">← GO TO LEVEL 3</button>
+</div>
+
+<div id="intro-overlay">
+  <div class="film-bar-top"><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div></div>
+  <div class="scene-label">⚠ FINAL GUARDIAN — SYNONYM LOCK</div>
+  <div class="scene-text">
+    Sector 25. West Node Room.<br>
+    The final guardian stands between you and the <em>CODE HEIST key</em>.<br>
+    <strong>Polymorphism.</strong> Same interface. Same method name.<br>
+    Completely different behavior — one decoder per synonym.<br><br>
+    <em>One wrong word and the chain collapses to question marks.</em><br>
+    Match them correctly. <strong>Complete the heist.</strong>
+  </div>
+  <div class="film-bar-bot"><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div></div>
+  <button class="skip-intro" onclick="skipIntro()">SKIP ↓</button>
+</div>
+
+<div class="bg-grid"></div>
+<div class="glow-orb1"></div>
+<div class="glow-orb2"></div>
+
+<div class="main-wrap">
+  <div class="topbar">
+    <div class="tb-logo">CODE HEIST</div>
+    <div class="tb-mission"><span class="live-dot"></span>⚠ FINAL GUARDIAN — BREACH IN PROGRESS</div>
+    <div class="tb-level">LEVEL 4 OF 4 — FINAL</div>
+  </div>
+  <div class="level-banner">
+    <div class="lv-badge">04</div>
+    <div class="lv-info">
+      <div class="lv-title">POLYMORPHISM</div>
+      <div class="lv-subtitle">The Synonym Lock · Sector 25 West Node</div>
+    </div>
+    <div class="lv-concept">🎭 CONCEPT: interface · same method · different class behavior</div>
+  </div>
+
+  <div class="split">
+    <div class="left-panel">
+      <!-- Dynamic question box: shown when admin has set a question for this team -->
+      <div class="story-box" id="dynamic-story" style="display:none"></div>
+      <div class="story-box">
+        <div class="story-label">▶ FINAL INTEL BRIEF</div>
+        <div class="story-text">
+          Three decoder classes, all implementing <em>HeistDecoder</em>.
+          All expose the same <em>decode()</em> method — but each class
+          only accepts <strong>one specific synonym</strong>.
+          Feed the wrong word to the wrong decoder and you get <strong>"?"</strong>.
+          Study the decoders carefully. Fill in the correct synonyms in the code editor on the right.
+        </div>
+      </div>
+      <div class="code-header">
+        <div class="code-filename">Level4.java</div>
+        <div class="java-tag">JAVA · READ ONLY</div>
+      </div>
+      <div class="code-scroll">
+        <pre id="java-code-display"><span class="kw">interface</span> <span class="cl">HeistDecoder</span> {
+  <span class="cl">String</span> <span class="fn">decode</span>(<span class="cl">String</span> synonym);
+}
+
+<span class="kw">class</span> <span class="cl">DirectionNode</span> <span class="kw">implements</span> <span class="cl">HeistDecoder</span> {
+  <span class="cm">// Accepts a Latin root meaning "north"</span>
+  <span class="kw">public</span> <span class="cl">String</span> <span class="fn">decode</span>(<span class="cl">String</span> s) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="st">"septentrion"</span>) || s.<span class="fn">equals</span>(<span class="st">"boreal"</span>))
+      <span class="kw">return</span> <span class="st">"N"</span>;
+    <span class="kw">return</span> <span class="st">"?"</span>;
+  }
+}
+
+<span class="kw">class</span> <span class="cl">ArchiveNode</span> <span class="kw">implements</span> <span class="cl">HeistDecoder</span> {
+  <span class="cm">// Accepts classical Latin for "west"</span>
+  <span class="kw">public</span> <span class="cl">String</span> <span class="fn">decode</span>(<span class="cl">String</span> s) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="st">"occident"</span>) || s.<span class="fn">equals</span>(<span class="st">"hesperian"</span>))
+      <span class="kw">return</span> <span class="st">"E"</span>;
+    <span class="kw">return</span> <span class="st">"?"</span>;
+  }
+}
+
+<span class="kw">class</span> <span class="cl">SectorNode</span> <span class="kw">implements</span> <span class="cl">HeistDecoder</span> {
+  <span class="cm">// Accepts Roman numeral for 25 (lowercase)</span>
+  <span class="kw">public</span> <span class="cl">String</span> <span class="fn">decode</span>(<span class="cl">String</span> s) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="st">"xxv"</span>))
+      <span class="kw">return</span> <span class="st">"U"</span>;
+    <span class="kw">return</span> <span class="st">"?"</span>;
+  }
+}
+
+<span class="kw">public class</span> <span class="cl">Level4</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+    <span class="cl">HeistDecoder</span> d1 = <span class="kw">new</span> <span class="cl">DirectionNode</span>();
+    <span class="cl">HeistDecoder</span> d2 = <span class="kw">new</span> <span class="cl">ArchiveNode</span>();
+    <span class="cl">HeistDecoder</span> d3 = <span class="kw">new</span> <span class="cl">SectorNode</span>();
+
+    <span class="cm">// Fill in the correct synonyms →</span>
+    <span class="cl">String</span> syn1 = <span class="st">"???"</span>; <span class="cm">// Latin root for NORTH → d1</span>
+    <span class="cl">String</span> syn2 = <span class="st">"???"</span>; <span class="cm">// Classical Latin for WEST → d2</span>
+    <span class="cl">String</span> syn3 = <span class="st">"???"</span>; <span class="cm">// Roman numeral for 25 → d3</span>
+
+    <span class="cl">String</span> fragment = d1.<span class="fn">decode</span>(syn1)
+                    + d2.<span class="fn">decode</span>(syn2)
+                    + d3.<span class="fn">decode</span>(syn3);
+
+    <span class="cm">// + Level 3 letter</span>
+    <span class="cl">String</span> key = fragment + <span class="st">"X"</span>;
+    <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="st">"CODE HEIST KEY: "</span> + key);
+  }
+}</pre>
+      </div>
+      <div class="hint-box">
+        <div class="hint-label">⚡ LEVEL RULES</div>
+        <div class="hint-items">
+          <div class="hint-item">All three classes implement <em>HeistDecoder</em> — same <em>decode()</em> signature, different behavior.</div>
+          <div class="hint-item"><em>DirectionNode</em> only accepts a <strong>Latin root</strong> meaning "north".</div>
+          <div class="hint-item"><em>ArchiveNode</em> only accepts a <strong>classical Latin</strong> word for "west".</div>
+          <div class="hint-item"><em>SectorNode</em> only accepts the <strong>Roman numeral</strong> for 25 — <em>lowercase only!</em></div>
+          <div class="hint-item">Wrong synonym → decoder returns <strong>"?"</strong>. Correct synonym → returns a letter.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: editable code inputs -->
+    <div class="right-panel">
+      <div class="editor-header">
+        <div class="editor-title">MODIFY THE CODE</div>
+        <div class="editor-badge">⚠ FINAL CHALLENGE</div>
+      </div>
+      <div class="editor-wrap">
+        <div class="editor-instruction" id="editor-instruction">
+          Replace the <em>???</em> values below with the correct synonyms. Each decoder only accepts one specific word — study the class on the left, then hit <em>SUBMIT CODE</em>.
+        </div>
+        <!-- Editable code block: populated dynamically by renderSynonymInputs() -->
+        <div class="code-editor-block" id="code-editor-block">
+<span class="kw">String</span> syn1 = "<input class="syn-input" id="syn1" placeholder="synonym for NORTH" autocomplete="off" spellcheck="false">";<br>
+<span class="cm">// Latin root for NORTH → DirectionNode</span><br><br>
+<span class="kw">String</span> syn2 = "<input class="syn-input" id="syn2" placeholder="synonym for WEST" autocomplete="off" spellcheck="false">";<br>
+<span class="cm">// Classical Latin for WEST → ArchiveNode</span><br><br>
+<span class="kw">String</span> syn3 = "<input class="syn-input" id="syn3" placeholder="Roman numeral for 25" autocomplete="off" spellcheck="false">";<br>
+<span class="cm">// Roman numeral (lowercase) → SectorNode</span>
+        </div>
+        <div style="font-family:var(--ui);font-size:11px;color:var(--muted2);padding:4px 0">
+          All three correct → <span style="color:var(--green)">CODE HEIST KEY: NEXU</span> is printed.
+        </div>
+      </div>
+      <div class="result-area">
+        <div class="result-box" id="resultBox">
+          <div class="result-icon" id="resultIcon"></div>
+          <div class="result-text">
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-sub" id="resultSub"></div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-submit" id="btnSubmit" onclick="checkAnswer()">SUBMIT CODE ↵</button>
+        <button class="btn-hint-side" onclick="askHint()">HINT</button>
+      </div>
+      <button class="btn-next-level" id="btnNext" onclick="showWin()">🔓 HEIST COMPLETE — REVEAL THE KEY →</button>
+      <div class="hint-log" id="hintLog"></div>
+    </div>
+  </div>
+
+  <div class="botbar">
+    <div class="bot-lv">Level <span>4</span> of 4 — Polymorphism · Synonym Lock · FINAL</div>
+    <div class="key-preview">
+      <span class="key-label">KEY:</span>
+      <div class="ks prev-g">N</div>
+      <div class="ks prev-a">E</div>
+      <div class="ks prev-t">X</div>
+      <div class="ks" id="ks3">_</div>
+    </div>
+    <div class="bot-hint">Match each synonym to the correct decoder · complete the CODE HEIST →</div>
+  </div>
+</div>
+
+<script>
+const API_KEY = "YOUR_API_KEY_HERE";
+const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL   = "claude-sonnet-4-20250514";
+const STORAGE_KEY = "codeheist_team_config";
+const TEAM_KEY    = "codeheist_current_team";
+
+// ── Fallback defaults (used only if no admin config found) ──
+const FALLBACK = {
+  synonymSheet:    { north: ["septentrion","boreal"], west: ["occident","hesperian"], num25: ["xxv"] },
+  correctSynonyms: { north: "septentrion", west: "occident", num25: "xxv" },
+  answer:          "CODE HEIST KEY: NEXU",
+  letter:          "U",
+  hint:            "Same method name does NOT mean same behavior. Match each synonym to its EXACT decoder class.",
+  question:        "",
+  task:            ""
+};
+
+let solved      = false;
+let hintHistory = [];
+let levelCfg    = null;   // will be set on load
+
+// ── Load this team's Level 4 config ──
+function loadTeamConfig() {
+  const team = localStorage.getItem(TEAM_KEY);
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw && team) {
+      const all = JSON.parse(raw);
+      if (all[team] && all[team][3]) {
+        levelCfg = all[team][3];
+        return team;
+      }
+    }
+  } catch(e) {}
+  levelCfg = JSON.parse(JSON.stringify(FALLBACK));
+  return team || null;
+}
+
+// ── Build valid answer arrays from admin config ──
+function getValidSynonyms() {
+  const cs = levelCfg.correctSynonyms || {};
+  const ss = levelCfg.synonymSheet    || {};
+  // For each slot, accepted = all synonyms in the sheet for that key,
+  // but we only mark correct the one the admin picked.
+  // For answer-checking we use ONLY the admin-designated correct synonym.
+  return {
+    north: cs.north ? [cs.north] : (FALLBACK.correctSynonyms.north ? [FALLBACK.correctSynonyms.north] : ["septentrion"]),
+    west:  cs.west  ? [cs.west]  : (FALLBACK.correctSynonyms.west  ? [FALLBACK.correctSynonyms.west]  : ["occident"]),
+    num25: cs.num25 ? [cs.num25] : (FALLBACK.correctSynonyms.num25 ? [FALLBACK.correctSynonyms.num25] : ["xxv"])
+  };
+}
+
+// ── Render the question/task from admin config ──
+function renderQuestion(team) {
+  const q = levelCfg.question || '';
+  const t = levelCfg.task     || '';
+
+  // If admin provided a question, show it in the story box
+  const storyBox = document.getElementById('dynamic-story');
+  if (storyBox) {
+    if (q) {
+      storyBox.innerHTML = `<div class="story-label">▶ TEAM QUESTION — ${team || 'YOUR TEAM'}</div>
+        <div class="story-text" style="white-space:pre-wrap;">${escHtml(q)}</div>`;
+      storyBox.style.display = 'block';
+    } else {
+      storyBox.style.display = 'none';
+    }
+  }
+
+  // If admin provided a task, update the editor instruction
+  const instrEl = document.getElementById('editor-instruction');
+  if (instrEl && t) {
+    instrEl.innerHTML = escHtml(t).replace(/\n/g,'<br>');
+  }
+
+  // Render synonym inputs based on admin's synonym sheet
+  renderSynonymInputs();
+}
+
+// ── Build the synonym input block from admin synonym sheet ──
+function renderSynonymInputs() {
+  const ss = levelCfg.synonymSheet || {};
+  const cs = levelCfg.correctSynonyms || {};
+
+  // Labels for each slot
+  const slotLabels = {
+    north: { id: 'syn1', decoder: 'DirectionNode', placeholder: 'synonym for NORTH', comment: '// → DirectionNode' },
+    west:  { id: 'syn2', decoder: 'ArchiveNode',   placeholder: 'synonym for WEST',  comment: '// → ArchiveNode' },
+    num25: { id: 'syn3', decoder: 'SectorNode',    placeholder: 'synonym for 25',    comment: '// → SectorNode' }
+  };
+
+  const editorBlock = document.getElementById('code-editor-block');
+  if (!editorBlock) return;
+
+  let html = '';
+  ['north','west','num25'].forEach(key => {
+    const meta = slotLabels[key];
+    const synonyms = ss[key] || [];
+    // Show available synonyms as hints in the comment if sheet has entries
+    const synsHint = synonyms.length > 0
+      ? `// Options: ${synonyms.join(', ')} — pick the correct one`
+      : meta.comment;
+
+    html += `<span class="kw">String</span> ${meta.id} = "<input class="syn-input" id="${meta.id}" placeholder="${meta.placeholder}" autocomplete="off" spellcheck="false">";<br>
+<span class="cm">${synsHint}</span><br><br>`;
+  });
+
+  editorBlock.innerHTML = html.trimEnd();
+}
+
+// ── Build the read-only Java code display from admin config ──
+function renderJavaCode(team) {
+  const cs = levelCfg.correctSynonyms || {};
+  const letter = levelCfg.letter || 'U';
+  const answer = levelCfg.answer || '';
+
+  // Infer the key letters from config
+  // The final key is built from prior levels + this letter
+  const prevLetters = [
+    localStorage.getItem('ch_l1_letter') || 'N',
+    localStorage.getItem('ch_l2_letter') || 'E',
+    localStorage.getItem('ch_l3_letter') || 'X'
+  ];
+
+  // Build human-readable decoder comments from correct synonyms
+  const northAccepts = cs.north ? `"${cs.north}"` : '"septentrion" or "boreal"';
+  const westAccepts  = cs.west  ? `"${cs.west}"`  : '"occident" or "hesperian"';
+  const num25Accepts = cs.num25 ? `"${cs.num25}"` : '"xxv"';
+
+  const codeEl = document.getElementById('java-code-display');
+  if (!codeEl) return;
+
+  codeEl.innerHTML = `<span class="kw">interface</span> <span class="cl">HeistDecoder</span> {
+  <span class="cl">String</span> <span class="fn">decode</span>(<span class="cl">String</span> synonym);
+}
+
+<span class="kw">class</span> <span class="cl">DirectionNode</span> <span class="kw">implements</span> <span class="cl">HeistDecoder</span> {
+  <span class="cm">// Accepts: ${escHtml(northAccepts)}</span>
+  <span class="kw">public</span> <span class="cl">String</span> <span class="fn">decode</span>(<span class="cl">String</span> s) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="st">???</span>))
+      <span class="kw">return</span> <span class="st">"${letter}"</span>;
+    <span class="kw">return</span> <span class="st">"?"</span>;
+  }
+}
+
+<span class="kw">class</span> <span class="cl">ArchiveNode</span> <span class="kw">implements</span> <span class="cl">HeistDecoder</span> {
+  <span class="cm">// Accepts: ${escHtml(westAccepts)}</span>
+  <span class="kw">public</span> <span class="cl">String</span> <span class="fn">decode</span>(<span class="cl">String</span> s) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="st">???</span>))
+      <span class="kw">return</span> <span class="st">"E"</span>;
+    <span class="kw">return</span> <span class="st">"?"</span>;
+  }
+}
+
+<span class="kw">class</span> <span class="cl">SectorNode</span> <span class="kw">implements</span> <span class="cl">HeistDecoder</span> {
+  <span class="cm">// Accepts: ${escHtml(num25Accepts)}</span>
+  <span class="kw">public</span> <span class="cl">String</span> <span class="fn">decode</span>(<span class="cl">String</span> s) {
+    <span class="kw">if</span> (s.<span class="fn">equals</span>(<span class="st">???</span>))
+      <span class="kw">return</span> <span class="st">"${letter}"</span>;
+    <span class="kw">return</span> <span class="st">"?"</span>;
+  }
+}
+
+<span class="kw">public class</span> <span class="cl">Level4</span> {
+  <span class="kw">public static void</span> <span class="fn">main</span>(<span class="cl">String</span>[] args) {
+    <span class="cl">HeistDecoder</span> d1 = <span class="kw">new</span> <span class="cl">DirectionNode</span>();
+    <span class="cl">HeistDecoder</span> d2 = <span class="kw">new</span> <span class="cl">ArchiveNode</span>();
+    <span class="cl">HeistDecoder</span> d3 = <span class="kw">new</span> <span class="cl">SectorNode</span>();
+
+    <span class="cm">// Fill in the correct synonyms →</span>
+    <span class="cl">String</span> syn1 = <span class="st">"???"</span>; <span class="cm">// → d1 (DirectionNode)</span>
+    <span class="cl">String</span> syn2 = <span class="st">"???"</span>; <span class="cm">// → d2 (ArchiveNode)</span>
+    <span class="cl">String</span> syn3 = <span class="st">"???"</span>; <span class="cm">// → d3 (SectorNode)</span>
+
+    <span class="cl">String</span> fragment = d1.<span class="fn">decode</span>(syn1)
+                    + d2.<span class="fn">decode</span>(syn2)
+                    + d3.<span class="fn">decode</span>(syn3);
+
+    <span class="cl">System</span>.out.<span class="fn">println</span>(<span class="st">"${escHtml(answer || 'CODE HEIST KEY: ???')}"</span>);
+  }
+}`;
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Build HINT_SYSTEM prompt from config ──
+function buildHintSystem() {
+  const cs = levelCfg.correctSynonyms || {};
+  const hint = levelCfg.hint || '';
+  let sys = `You are the CODE HEIST guardian AI — sarcastic, cryptic, slightly menacing. This is the FINAL level — Java POLYMORPHISM.\n`;
+  sys += `The correct synonyms are: DirectionNode="${cs.north||'?'}", ArchiveNode="${cs.west||'?'}", SectorNode="${cs.num25||'?'}".\n`;
+  if (hint) sys += `Key hint to give (indirect, don't reveal directly): ${hint}\n`;
+  sys += `Give ONE indirect cryptic hint without revealing any synonym. Under 70 words. Stay in character. This is the final guardian — be dramatic.`;
+  return sys;
+}
+
+// ── INIT ──
+window.onload = () => {
+  const team = loadTeamConfig();
+
+  if (!localStorage.getItem('ch_l3_done')) {
+    document.getElementById('locked-gate').style.display = 'flex';
+    document.getElementById('intro-overlay').style.display = 'none';
+    return;
+  }
+
+  // Show team badge
+  if (team) {
+    const tb = document.querySelector('.tb-mission');
+    if (tb) tb.innerHTML = `<span class="live-dot"></span>⚠ ${team} — FINAL GUARDIAN — BREACH IN PROGRESS`;
+  }
+
+  renderQuestion(team);
+  renderJavaCode(team);
+
+  setTimeout(() => {
+    document.getElementById('intro-overlay').classList.add('fade-out');
+    setTimeout(() => document.getElementById('intro-overlay').style.display='none', 1000);
+  }, 3800);
+};
+
+function skipIntro(){ document.getElementById('intro-overlay').style.display='none'; }
+
+function checkAnswer() {
+  if (solved) return;
+  const s1 = document.getElementById('syn1').value.trim();
+  const s2 = document.getElementById('syn2').value.trim();
+  const s3 = document.getElementById('syn3').value.trim();
+  const box = document.getElementById('resultBox');
+  box.classList.remove('show','success','fail');
+  void box.offsetWidth;
+
+  const valid = getValidSynonyms();
+  const ok1 = valid.north.includes(s1);
+  const ok2 = valid.west.includes(s2);
+  const ok3 = valid.num25.includes(s3);
+
+  const letter = levelCfg.letter || 'U';
+
+  if (ok1 && ok2 && ok3) {
+    box.classList.add('show','success');
+    document.getElementById('resultIcon').textContent = '🔓';
+    document.getElementById('resultTitle').textContent = 'LEVEL UNLOCKED';
+    const answerStr = levelCfg.answer || 'CODE HEIST KEY: NEXU';
+    document.getElementById('resultSub').textContent = `All three decoders unlocked. Answer: ${answerStr}`;
+    document.getElementById('ks3').textContent = letter;
+    document.getElementById('ks3').classList.add('got');
+    document.getElementById('btnNext').classList.add('show');
+    document.getElementById('btnSubmit').disabled = true;
+    solved = true;
+  } else {
+    box.classList.add('show','fail');
+    document.getElementById('resultIcon').textContent = '✗';
+    document.getElementById('resultTitle').textContent = 'TRY AGAIN';
+    let wrong = [];
+    if (!ok1) wrong.push('syn1');
+    if (!ok2) wrong.push('syn2');
+    if (!ok3) wrong.push('syn3');
+    document.getElementById('resultSub').textContent = 'Wrong synonym(s): ' + wrong.join(', ') + '. Each decoder only accepts its specific word.';
+  }
+}
+
+function showWin(){
+  // Record leaderboard entry
+  const team = localStorage.getItem(TEAM_KEY);
+  if (team) {
+    const LB_KEY = "codeheist_leaderboard";
+    try {
+      const lb = JSON.parse(localStorage.getItem(LB_KEY) || '[]');
+      lb.push({ team, completedAt: new Date().toISOString(), startedAt: localStorage.getItem('ch_started_at') });
+      localStorage.setItem(LB_KEY, JSON.stringify(lb));
+    } catch(e) {}
+  }
+  document.getElementById('winScreen').classList.add('show');
+  localStorage.removeItem('ch_l1_done');
+  localStorage.removeItem('ch_l2_done');
+  localStorage.removeItem('ch_l3_done');
+}
+
+function replay(){
+  window.location.href = 'level1-hack_heist.html';
+}
+
+async function askHint() {
+  const ld = addHintMsg('load','Cracking final hint channel...');
+  try {
+    const r = await fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:MODEL, max_tokens:200, system:buildHintSystem(), messages:[...hintHistory,{role:'user',content:'Give me a hint.'}]})
+    });
+    const d = await r.json();
+    const reply = d.content?.map(c=>c.text||'').join('')||'[no response]';
+    ld.remove(); addHintMsg('hint', reply);
+    hintHistory.push({role:'user',content:'Give me a hint.'},{role:'assistant',content:reply});
+  } catch(e){ ld.remove(); addHintMsg('sys','[Connection lost]'); }
+}
+
+function addHintMsg(cls, txt){
+  const log = document.getElementById('hintLog');
+  const d = document.createElement('div');
+  d.className = 'hlog-msg '+cls;
+  d.textContent = txt;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+  return d;
+}
+
+// Allow Enter in syn inputs to submit
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter') checkAnswer();
+});
+</script>
+</body>
+</html>

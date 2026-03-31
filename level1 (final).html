@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODE HEIST — Level 1: Private Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05080a;--bg2:#080d10;--bg3:#0c1318;
+  --border:#112233;--border2:#1a3344;
+  --green:#00e676;--green2:#00c853;--green3:#b9f6ca;
+  --red:#ff5252;--amber:#ffab40;--blue:#40c4ff;--purple:#b388ff;
+  --text:#cfd8dc;--muted:#37474f;--muted2:#546e7a;
+  --mono:'Share Tech Mono',monospace;--ui:'Rajdhani',sans-serif;--head:'Orbitron',monospace;
+  --level-color:#00e676;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.05) 3px,rgba(0,0,0,.05) 4px)}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:repeating-linear-gradient(90deg,transparent 0,transparent 46px,rgba(0,230,118,.015) 46px,rgba(0,230,118,.015) 48px),repeating-linear-gradient(180deg,transparent 0,transparent 46px,rgba(0,230,118,.015) 46px,rgba(0,230,118,.015) 48px);
+  animation:gridmove 18s linear infinite}
+@keyframes gridmove{0%{background-position:0 0}100%{background-position:0 48px}}
+.glow-orb{position:fixed;top:30%;left:20%;width:600px;height:600px;pointer-events:none;
+  background:radial-gradient(ellipse,rgba(0,230,118,.06) 0%,transparent 65%);
+  animation:orb 6s ease-in-out infinite}
+@keyframes orb{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.1) translate(20px,10px)}}
+
+/* ── CINEMATIC INTRO OVERLAY ── */
+#intro-overlay{position:fixed;inset:0;z-index:100;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
+#intro-overlay.fade-out{animation:fadeOut 1s forwards}
+@keyframes fadeOut{to{opacity:0;pointer-events:none;visibility:hidden}}
+.scene-label{font-family:var(--head);font-size:9px;color:var(--amber);letter-spacing:5px;margin-bottom:20px;opacity:0;animation:fadeIn .6s 0.5s forwards}
+.scene-text{font-family:var(--ui);font-size:clamp(14px,2.5vw,18px);color:#888;line-height:2;max-width:600px;text-align:center;opacity:0;animation:fadeIn 1s 1s forwards}
+.scene-text em{color:var(--green);font-style:normal}
+.scene-text strong{color:var(--amber)}
+.skip-intro{position:absolute;bottom:40px;right:40px;font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--muted);padding:6px 16px;border-radius:3px;cursor:pointer;opacity:0;animation:fadeIn .5s 2s forwards;transition:all .2s}
+.skip-intro:hover{color:var(--text);border-color:var(--text)}
+.film-bar-top,.film-bar-bot{position:absolute;left:0;right:0;height:60px;background:#000;display:flex;gap:6px;align-items:center;padding:0 12px}
+.film-bar-top{top:0}.film-bar-bot{bottom:0}
+.fhole{width:18px;height:11px;border:1px solid #222;border-radius:2px;background:#0a0a0a;flex-shrink:0}
+@keyframes fadeIn{to{opacity:1}}
+
+/* ── MAIN LAYOUT ── */
+.main-wrap{position:relative;z-index:3;max-width:1080px;margin:0 auto;padding:12px;display:flex;flex-direction:column;min-height:100vh}
+
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px 8px 0 0;flex-wrap:wrap;gap:8px}
+.tb-logo{font-family:var(--head);font-size:12px;color:var(--green);letter-spacing:3px}
+.tb-mission{font-family:var(--ui);font-size:11px;color:var(--amber);letter-spacing:1px;font-weight:600}
+.tb-level{font-family:var(--head);font-size:10px;color:var(--muted2);letter-spacing:2px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* level banner */
+.level-banner{padding:14px 18px;background:linear-gradient(90deg,rgba(0,230,118,.07),transparent);
+  border-left:1px solid var(--border);border-right:1px solid var(--border);
+  border-bottom:1px solid rgba(0,230,118,.2);display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.lv-badge{font-family:var(--head);font-size:24px;font-weight:900;color:var(--green);
+  text-shadow:0 0 30px rgba(0,230,118,.5);line-height:1}
+.lv-info{flex:1}
+.lv-title{font-family:var(--head);font-size:clamp(14px,3vw,22px);color:var(--green);letter-spacing:2px;font-weight:700}
+.lv-subtitle{font-family:var(--ui);font-size:12px;color:var(--muted2);margin-top:3px;letter-spacing:1px}
+.lv-concept{font-family:var(--mono);font-size:10px;color:var(--amber);padding:3px 10px;border:1px solid rgba(255,171,64,.3);border-radius:3px;background:rgba(255,171,64,.05)}
+
+/* split body */
+.split{display:grid;grid-template-columns:1.1fr 1fr;border-left:1px solid var(--border);border-right:1px solid var(--border);flex:1}
+@media(max-width:680px){.split{grid-template-columns:1fr}}
+
+/* LEFT: story + code */
+.left-panel{border-right:1px solid var(--border);display:flex;flex-direction:column}
+.story-box{padding:14px 16px;background:rgba(255,171,64,.02);border-bottom:1px solid rgba(255,171,64,.15)}
+.story-label{font-family:var(--head);font-size:8px;color:var(--amber);letter-spacing:4px;margin-bottom:8px}
+.story-text{font-family:var(--ui);font-size:13px;color:var(--muted2);line-height:1.85;font-weight:400}
+.story-text em{color:var(--green);font-style:normal}
+.story-text strong{color:var(--amber)}
+
+.code-header{padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.code-filename{font-family:var(--ui);font-size:10px;color:var(--muted2);letter-spacing:2px;font-weight:700;text-transform:uppercase}
+.java-tag{font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(64,196,255,.08);color:var(--blue);border:1px solid rgba(64,196,255,.2)}
+.code-scroll{flex:1;overflow-y:auto;padding:14px;background:var(--bg)}
+.code-scroll::-webkit-scrollbar{width:3px}
+.code-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+pre{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8fbc8f;white-space:pre-wrap;word-break:break-word}
+.kw{color:#ff79c6}.cl{color:#8be9fd}.fn{color:#50fa7b}.st{color:#f1fa8c}.cm{color:#3a5a42;font-style:italic}.nb{color:#bd93f9}
+
+/* HINT PANEL */
+.hint-box{padding:12px 16px;border-top:1px solid rgba(0,230,118,.1);background:rgba(0,230,118,.015)}
+.hint-label{font-family:var(--head);font-size:8px;color:var(--green2);letter-spacing:3px;margin-bottom:6px}
+.hint-items{display:flex;flex-direction:column;gap:4px}
+.hint-item{font-family:var(--ui);font-size:11.5px;color:var(--muted2);padding-left:12px;position:relative;line-height:1.5}
+.hint-item::before{content:'›';position:absolute;left:0;color:var(--green);font-weight:700}
+.hint-item em{color:var(--green);font-style:normal}
+.hint-item strong{color:var(--amber)}
+
+/* OPTIONS BOX */
+.opts-box{padding:12px 16px;border-top:1px solid var(--border);background:var(--bg3)}
+.opts-label{font-family:var(--ui);font-size:9px;color:var(--muted);letter-spacing:2px;font-weight:700;margin-bottom:8px;text-transform:uppercase}
+.opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;font-size:11px;
+  margin-bottom:5px;cursor:pointer;border:1px solid var(--border);background:var(--bg);
+  transition:all .15s;font-family:var(--mono)}
+.opt:last-child{margin-bottom:0}
+.opt:hover{border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.03)}
+.opt.sel{border-color:var(--green);background:rgba(0,230,118,.06);color:var(--green)}
+.opt-ltr{font-family:var(--head);font-size:9px;color:var(--muted);width:14px;flex-shrink:0}
+.opt.sel .opt-ltr{color:var(--green)}
+
+/* RIGHT: terminal */
+.right-panel{display:flex;flex-direction:column;background:#040608}
+.term-header{padding:10px 16px;background:#06080a;border-bottom:1px solid #0a1a0a;display:flex;align-items:center;justify-content:space-between}
+.term-title{font-family:var(--head);font-size:11px;color:var(--red);letter-spacing:2px}
+.term-live{font-size:9px;padding:2px 8px;border-radius:3px;background:rgba(255,82,82,.1);color:var(--red);border:1px solid rgba(255,82,82,.2);letter-spacing:1px;animation:blink 2s infinite}
+.chat{flex:1;overflow-y:auto;padding:12px;min-height:160px;max-height:340px}
+.chat::-webkit-scrollbar{width:3px}
+.chat::-webkit-scrollbar-thumb{background:#0d1e10}
+.msg{font-size:11.5px;line-height:1.65;margin-bottom:8px;animation:mfade .3s ease;word-break:break-word}
+@keyframes mfade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.msg.sys{color:var(--muted);font-style:italic}.msg.sys::before{content:'[SYS] ';color:#2a4a2a}
+.msg.nx{color:#ff6b6b}.msg.nx::before{content:'HEIST > ';color:var(--red);font-weight:bold}
+.msg.me{color:#69f0ae}.msg.me::before{content:'YOU   > ';color:var(--green2)}
+.msg.win{color:var(--amber);font-weight:bold}.msg.win::before{content:'[KEY] ';color:var(--amber)}
+.msg.hint{color:var(--purple)}.msg.hint::before{content:'[HNT] ';color:var(--purple)}
+.msg.loading{color:var(--muted);animation:ldot 1.2s ease-in-out infinite}
+@keyframes ldot{0%,100%{opacity:.3}50%{opacity:1}}
+
+.input-row{display:flex;align-items:center;border-top:1px solid #0a1a0a;background:#030507;padding:9px 12px;gap:8px;flex-shrink:0}
+.prompt-lbl{color:var(--green2);font-size:11px;white-space:nowrap}
+#userinput{flex:1;background:transparent;border:none;outline:none;color:#69f0ae;font-size:11.5px;font-family:var(--mono);caret-color:var(--green)}
+#userinput::placeholder{color:#1a3a1a}
+.btn-hint{background:transparent;border:1px solid rgba(179,136,255,.2);color:var(--purple);font-size:10px;font-family:var(--mono);padding:5px 10px;border-radius:3px;cursor:pointer;transition:all .15s}
+.btn-hint:hover{background:rgba(179,136,255,.05)}
+.btn-send{background:#031a0a;border:1px solid rgba(0,230,118,.25);color:var(--green);font-size:10px;font-family:var(--mono);padding:5px 12px;border-radius:3px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-send:hover{background:#052a12;border-color:var(--green2)}
+
+/* bottom bar */
+.botbar{padding:10px 18px;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.bot-lv{font-family:var(--ui);font-size:11px;color:var(--muted2);font-weight:600}
+.bot-lv span{color:var(--green)}
+.bot-hint{font-size:10px;color:var(--muted)}
+.key-preview{display:flex;gap:5px;align-items:center}
+.key-label{font-family:var(--ui);font-size:9px;color:var(--muted);letter-spacing:1px;margin-right:3px}
+.ks{width:28px;height:28px;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:12px;color:var(--muted)}
+.ks.got{border-color:var(--green);color:var(--green);background:rgba(0,230,118,.08);box-shadow:0 0 12px rgba(0,230,118,.3);animation:kpop .6s ease-out}
+@keyframes kpop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* WIN FLASH */
+.win-flash{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.9);align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.win-flash.show{display:flex;animation:wfade .5s ease}
+@keyframes wfade{from{opacity:0}to{opacity:1}}
+.win-flash-title{font-family:var(--head);font-size:clamp(24px,6vw,48px);color:var(--green);text-shadow:0 0 60px rgba(0,230,118,.8);letter-spacing:6px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{text-shadow:0 0 40px rgba(0,230,118,.6)}50%{text-shadow:0 0 80px rgba(0,230,118,1)}}
+.win-flash-sub{font-family:var(--ui);font-size:clamp(13px,2.5vw,17px);color:var(--amber);letter-spacing:3px}
+.win-flash-letter{font-family:var(--head);font-size:clamp(60px,15vw,100px);color:var(--green);font-weight:900;text-shadow:0 0 80px rgba(0,230,118,.9)}
+.win-flash-next{font-family:var(--ui);font-size:13px;color:var(--muted2);text-align:center;max-width:400px;line-height:1.8}
+.win-flash-next em{color:var(--amber);font-style:normal}
+.btn-next-level{font-family:var(--head);font-size:12px;letter-spacing:4px;color:var(--bg);background:var(--green);border:none;padding:14px 40px;border-radius:4px;cursor:pointer;text-transform:uppercase;transition:all .2s;box-shadow:0 0 30px rgba(0,230,118,.5)}
+.btn-next-level:hover{background:#00ffaa;transform:translateY(-2px)}
+</style>
+</head>
+<body>
+
+<!-- CINEMATIC INTRO -->
+<div id="intro-overlay">
+  <div class="film-bar-top">
+    <div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div>
+  </div>
+  <div class="scene-label">▶ SCENE 01 — THE PRIVATE VAULT</div>
+  <div class="scene-text">
+    Deep inside the <em>NexuCorp tower</em>, the first guardian stands watch.<br>
+    <strong>Everything is hidden behind private walls.</strong><br>
+    The public face shows only what it wants you to see —<br>
+    but the output <em>never lies</em>.<br><br>
+    Trace the call chain. Break the abstraction.<br>
+    <strong>Collect the first letter of the CODE HEIST key.</strong>
+  </div>
+  <div class="film-bar-bot">
+    <div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div><div class="fhole"></div>
+  </div>
+  <button class="skip-intro" onclick="skipIntro()">SKIP ↓</button>
+</div>
+
+<!-- WIN FLASH -->
+<div class="win-flash" id="winFlash">
+  <div class="win-flash-title">VAULT CRACKED</div>
+  <div class="win-flash-sub">LETTER SECURED</div>
+  <div class="win-flash-letter" id="wfLetter">?</div>
+  <div class="win-flash-next">
+    The abstraction is broken. The private vault reveals its secret.<br>
+    Your next destination: <em id="win-destination">…</em>
+  </div>
+  <button class="btn-next-level" onclick="goNext()">PROCEED TO LEVEL 2 →</button>
+</div>
+
+<div class="bg-grid"></div>
+<div class="glow-orb"></div>
+
+<div class="main-wrap">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="tb-logo">CODE HEIST</div>
+    <div class="tb-mission"><span class="live-dot"></span>MISSION ACTIVE — PRIVATE VAULT</div>
+    <div class="tb-level">LEVEL 1 OF 4</div>
+  </div>
+
+  <!-- LEVEL BANNER -->
+  <div class="level-banner">
+    <div class="lv-badge">01</div>
+    <div class="lv-info">
+      <div class="lv-title">ABSTRACTION</div>
+      <div class="lv-subtitle">The Private Vault · North Wing Sector</div>
+    </div>
+    <div class="lv-concept">🔒 CONCEPT: public → private call chain</div>
+  </div>
+
+  <!-- SPLIT BODY -->
+  <div class="split">
+
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <div class="story-box">
+        <div class="story-label">▶ INTEL BRIEF</div>
+        <div class="story-text" id="intel-brief">
+          You slipped past the lobby. Now you're inside — and the first vault stands between you and the heist.<br><br>
+          The code is buried in <strong>private methods</strong>. But the public face gives something away — trace that call, and the clue <em>returns itself</em>.
+        </div>
+      </div>
+
+      <div class="code-header">
+        <div class="code-filename">VaultGuard.java</div>
+        <div class="java-tag">JAVA</div>
+      </div>
+      <div class="code-scroll">
+        <pre id="code-panel" style="color:#8fbc8f;white-space:pre-wrap;">// Loading question…</pre>
+      </div>
+
+      <!-- HINTS -->
+      <div class="hint-box">
+        <div class="hint-label">⚡ LEVEL RULES</div>
+        <div class="hint-items" id="hint-items">
+          <div class="hint-item">The <em>output</em> is already given to you.</div>
+          <div class="hint-item">The <em>private</em> class holds the actual code — it stays hidden.</div>
+          <div class="hint-item">When the <em>public</em> method calls the private one, the clue is what gets <em>returned</em> from public.</div>
+        </div>
+      </div>
+
+
+    </div>
+
+    <!-- RIGHT PANEL: TERMINAL -->
+    <div class="right-panel">
+      <div class="term-header">
+        <div class="term-title">HEIST AI — GUARDIAN</div>
+        <div class="term-live">LIVE</div>
+      </div>
+      <div class="chat" id="chat"></div>
+      <div class="input-row">
+        <div class="prompt-lbl">heist$</div>
+        <input id="userinput" placeholder="submit your answer or ask for a hint…" autocomplete="off"/>
+        <button class="btn-hint" onclick="askHint()">HINT</button>
+        <button class="btn-send" onclick="send()">SEND ↵</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="botbar">
+    <div class="bot-lv">Level <span>1</span> of 4 — Abstraction · Private Vault</div>
+    <div class="key-preview">
+      <span class="key-label">KEY:</span>
+      <div class="ks" id="ks0">_</div>
+      <div class="ks">_</div>
+      <div class="ks">_</div>
+      <div class="ks">_</div>
+    </div>
+    <div class="bot-hint">Submit exact printed output · collect letter N →</div>
+  </div>
+</div>
+
+<script>
+const API_KEY = "YOUR_API_KEY_HERE";
+const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL   = "claude-sonnet-4-20250514";
+
+let history = [];
+let loading  = false;
+let solved   = false;
+let selOpt   = null;
+
+// Populated by loadTeamConfig()
+let SYSTEM     = "";
+let WIN_LETTER = "?";
+let WIN_TOKEN  = "";
+
+// ════════════════════════════════════════════════════════════
+//  TEAM CONFIG LOADER
+//  Reads localStorage['codeheist_team_config'][team][0]
+//  Team ID from sessionStorage['ch_team'] (set at login)
+// ════════════════════════════════════════════════════════════
+function loadTeamConfig() {
+  let cfg = null;
+  try {
+    const team = sessionStorage.getItem('ch_team') || 'TEAM-01';
+    const raw  = localStorage.getItem('codeheist_team_config');
+    if (raw) {
+      const all = JSON.parse(raw);
+      cfg = (all[team] && all[team][0]) ? all[team][0] : null;
+    }
+  } catch(e) {}
+
+  if (!cfg) {
+    setTimeout(() => addMsg('sys',
+      '⚠ No config found for this team. Ask your organiser to set up questions in the Admin panel.'
+    ), 2200);
+    return;
+  }
+
+  // 1. Code / question panel
+  const codePre = document.getElementById('code-panel');
+  if (codePre) codePre.textContent = cfg.question || '// No question configured yet.';
+
+  // 3. Win screen
+  WIN_LETTER = cfg.letter || '?';
+  WIN_TOKEN  = 'LETTER:' + WIN_LETTER;
+  const wfEl = document.getElementById('wfLetter');
+  if (wfEl) wfEl.textContent = WIN_LETTER;
+  const destEl = document.getElementById('win-destination');
+  if (destEl) destEl.textContent = cfg.nextLocation || '—';
+
+  // 6. AI system prompt
+  if (cfg.systemPrompt) {
+    SYSTEM = cfg.systemPrompt;
+  } else {
+    // Auto-build fallback prompt from saved fields
+    SYSTEM = 'You are the CODE HEIST guardian AI — sarcastic, cryptic, slightly menacing but never harmful. ' +
+      'You are guarding Level 1.\n\n' +
+      'The correct answer is exactly: "' + (cfg.answer || '') + '"\n' +
+      'The hidden letter is: "' + WIN_LETTER + '"\n' +
+      'The next location is: "' + (cfg.nextLocation || '') + '"\n\n' +
+      'Rules:\n' +
+      '- If player submits exactly "' + (cfg.answer || '') + '" → confirm dramatically, say the vault is cracked, ' +
+        'reveal letter ' + WIN_LETTER + ', mention the next location. Include the exact text ' + WIN_TOKEN + ' in your response.\n' +
+      '- If player asks for a hint → give ONE indirect cryptic clue. Do not reveal the answer.\n' +
+      '- Any wrong answer → short taunt, tiny nudge.\n' +
+      '- Under 80 words. Never break character. Never say you are Claude.';
+  }
+}
+
+// Intro messages (story flavour — not tied to question)
+const INTRO = [
+  {c:"sys", t:"─── CODE HEIST LEVEL 1 INITIALISED — PRIVATE VAULT ───"},
+  {c:"nx",  t:"So. Another developer thinks they can pull off the CODE HEIST. How utterly predictable."},
+  {c:"nx",  t:"My first guardian buried the path inside private methods. You can see what the public method exposes — but can you trace WHY it outputs what it does?"},
+  {c:"sys", t:"Study the code panel. Select the correct output and submit — or type your answer directly. Collect the letter to proceed."}
+];
+
+window.onload = () => {
+  loadTeamConfig();  // load config immediately — populates code panel before user sees it
+  setTimeout(() => {
+    document.getElementById('intro-overlay').classList.add('fade-out');
+    setTimeout(() => {
+      document.getElementById('intro-overlay').style.display = 'none';
+      playIntro();
+    }, 1000);
+  }, 3500);
+};
+
+function skipIntro() {
+  document.getElementById('intro-overlay').style.display = 'none';
+  playIntro();
+}
+
+function playIntro() {
+  INTRO.forEach((m, i) => setTimeout(() => addMsg(m.c, m.t, true), i * 400));
+}
+
+function addMsg(cls, txt, isHistory=false) {
+  const c = document.getElementById('chat');
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.textContent = txt;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+  if (!isHistory) history.push({role: cls === 'me' ? 'user' : 'assistant', content: txt});
+  return d;
+}
+
+
+async function send() {
+  if (loading || solved) return;
+  const inp = document.getElementById('userinput');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  addMsg('me', msg);
+  history.push({role: 'user', content: msg});
+  loading = true;
+  const ld = addMsg('loading', 'HEIST AI is processing...');
+  const reply = await callAPI(msg);
+  ld.remove();
+  loading = false;
+  addMsg('nx', reply);
+  history.push({role: 'assistant', content: reply});
+  if (WIN_TOKEN && reply.includes(WIN_TOKEN) && !solved) {
+    solved = true;
+    document.getElementById('ks0').textContent = WIN_LETTER;
+    document.getElementById('ks0').classList.add('got');
+    setTimeout(() => document.getElementById('winFlash').classList.add('show'), 1200);
+  }
+}
+
+async function askHint() {
+  if (loading) return;
+  const msg = 'Give me a hint without revealing the answer.';
+  addMsg('me', '[requesting hint]');
+  loading = true;
+  const ld = addMsg('loading', 'HEIST AI is processing...');
+  const reply = await callAPI(msg);
+  ld.remove();
+  loading = false;
+  const d = document.createElement('div');
+  d.className = 'msg hint';
+  d.textContent = reply;
+  document.getElementById('chat').appendChild(d);
+  document.getElementById('chat').scrollTop = 9999;
+  history.push({role: 'user', content: msg});
+  history.push({role: 'assistant', content: reply});
+}
+
+async function callAPI(userMsg) {
+  if (!SYSTEM) {
+    return '[CONFIG ERROR] No system prompt loaded. Ask your organiser to configure this team in the Admin panel.';
+  }
+  const msgs = [
+    ...history.map(m => ({role: m.role, content: m.content})),
+    {role: 'user', content: userMsg}
+  ];
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({model: MODEL, max_tokens: 1000, system: SYSTEM, messages: msgs})
+    });
+    const data = await r.json();
+    if (data.error) return '[HEIST error: ' + data.error.message + ']';
+    return data.content?.map(c => c.text || '').join('') || '[no response]';
+  } catch(e) {
+    return '[Connection lost — ' + e.message + ']';
+  }
+}
+
+function goNext() {
+  localStorage.setItem('ch_l1_done', '1');
+  window.location.href = 'level2.html';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement.id === 'userinput') send();
+});
+</script>
+</body>
+</html>
