@@ -878,12 +878,7 @@ export default function Register() {
 
             <div id="agents-container">
               {[0, 1, 2, 3].map(i => (
-                <div
-                  key={i}
-                  className="agent-card"
-                  id={`agent-card-${i + 1}`}
-                  style={{ display: i < size ? 'block' : 'none' }}
-                >
+                <div key={i} className="agent-card" id={`agent-card-${i + 1}`} style={{ display: i < size ? 'block' : 'none' }}>
                   <div className="agent-card-header">
                     <div className="agent-number">AGENT-{String(i + 1).padStart(2, '0')}</div>
                     <div className="agent-role">// {AGENT_ROLES[i]}</div>
