@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODE HEIST — TEAM ACCESS</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#05080a;--bg2:#080d10;--bg3:#0c1318;
+  --border:#112233;--border2:#1a3344;
+  --green:#00e676;--green2:#00c853;--green3:#b9f6ca;
+  --red:#ff5252;--amber:#ffab40;--blue:#40c4ff;--teal:#64ffda;
+  --text:#cfd8dc;--muted:#607d8b;--muted2:#78909c;
+  --mono:'Share Tech Mono',monospace;--ui:'Rajdhani',sans-serif;--head:'Orbitron',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);display:flex;align-items:center;justify-content:center}
+body::before{content:'';position:fixed;inset:0;z-index:20;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.05) 3px,rgba(0,0,0,.05) 4px)}
+body::after{content:'';position:fixed;inset:0;z-index:19;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.3}
+
+/* Laser grid */
+.laser-grid{position:fixed;inset:0;z-index:0;pointer-events:none;perspective:500px;overflow:hidden}
+.grid-floor{position:absolute;bottom:0;left:-50%;width:200%;height:80%;transform:rotateX(65deg);transform-origin:bottom center;background-image:linear-gradient(rgba(0,230,118,0.13) 1px,transparent 1px),linear-gradient(90deg,rgba(0,230,118,0.13) 1px,transparent 1px);background-size:60px 60px;animation:grid-scroll 5s linear infinite;mask-image:linear-gradient(to top,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.2) 40%,transparent 75%)}
+@keyframes grid-scroll{0%{background-position:0 0}100%{background-position:0 60px}}
+.grid-ceil{position:absolute;top:0;left:-50%;width:200%;height:55%;transform:rotateX(-65deg);transform-origin:top center;background-image:linear-gradient(rgba(255,171,64,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,171,64,0.06) 1px,transparent 1px);background-size:60px 60px;animation:grid-scroll 6s linear infinite;mask-image:linear-gradient(to bottom,rgba(0,0,0,0.4) 0%,rgba(0,0,0,0.1) 40%,transparent 75%)}
+.laser-sweep{position:absolute;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent 0%,rgba(0,230,118,0.5) 40%,rgba(0,230,118,0.8) 50%,rgba(0,230,118,0.5) 60%,transparent 100%);filter:blur(1px);animation:laser-move linear infinite;opacity:0}
+.laser-sweep:nth-child(3){animation-duration:8s;animation-delay:0s;left:0}
+.laser-sweep:nth-child(4){animation-duration:11s;animation-delay:3.5s;left:0;background:linear-gradient(180deg,transparent,rgba(255,171,64,0.35),rgba(255,171,64,0.6),rgba(255,171,64,0.35),transparent)}
+.laser-sweep:nth-child(5){animation-duration:9s;animation-delay:6s;left:0}
+@keyframes laser-move{0%{left:-2px;opacity:0}5%{opacity:1}95%{opacity:1}100%{left:100%;opacity:0}}
+.laser-h{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,230,118,0.4),rgba(0,230,118,0.7),rgba(0,230,118,0.4),transparent);filter:blur(1px);animation:laser-h-move linear infinite;opacity:0}
+.laser-h:nth-child(6){animation-duration:12s;animation-delay:1s;top:0}
+.laser-h:nth-child(7){animation-duration:15s;animation-delay:7s;top:0;background:linear-gradient(90deg,transparent,rgba(255,171,64,0.25),rgba(255,171,64,0.5),rgba(255,171,64,0.25),transparent)}
+@keyframes laser-h-move{0%{top:-2px;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
+
+.glow-center{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:650px;height:650px;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,rgba(0,230,118,.07) 0%,rgba(0,100,60,.02) 45%,transparent 70%);animation:pglow 5s ease-in-out infinite}
+.glow-amber{position:fixed;top:10%;right:5%;width:300px;height:300px;pointer-events:none;z-index:1;background:radial-gradient(circle,rgba(255,171,64,.055) 0%,transparent 65%);animation:pglow2 8s ease-in-out infinite}
+@keyframes pglow{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}}
+@keyframes pglow2{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.7;transform:scale(1.15)}}
+
+.skyline{position:fixed;bottom:0;left:0;right:0;height:32vh;pointer-events:none;z-index:2;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 280' preserveAspectRatio='xMidYMax slice'%3E%3Cg fill='%23040908'%3E%3Crect x='0' y='140' width='60' height='140'/%3E%3Crect x='30' y='100' width='40' height='180'/%3E%3Crect x='80' y='120' width='50' height='160'/%3E%3Crect x='140' y='80' width='30' height='200'/%3E%3Crect x='150' y='60' width='15' height='220'/%3E%3Crect x='180' y='130' width='70' height='150'/%3E%3Crect x='260' y='90' width='45' height='190'/%3E%3Crect x='315' y='110' width='35' height='170'/%3E%3Crect x='360' y='70' width='55' height='210'/%3E%3Crect x='430' y='100' width='65' height='180'/%3E%3Crect x='510' y='120' width='40' height='160'/%3E%3Crect x='600' y='60' width='50' height='220'/%3E%3Crect x='715' y='90' width='60' height='190'/%3E%3Crect x='830' y='100' width='55' height='180'/%3E%3Crect x='945' y='80' width='50' height='200'/%3E%3Crect x='1120' y='60' width='45' height='220'/%3E%3Crect x='1290' y='100' width='60' height='180'/%3E%3C/g%3E%3Cg fill='%2300e676' opacity='0.2'%3E%3Crect x='154' y='52' width='4' height='8'/%3E%3Crect x='373' y='32' width='4' height='8'/%3E%3Crect x='603' y='52' width='4' height='8'/%3E%3C/g%3E%3C/svg%3E") no-repeat bottom;background-size:cover;opacity:0.75}
+
+.particles{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.particle{position:absolute;width:2px;height:2px;border-radius:50%;background:var(--green);opacity:0;animation:float-up linear infinite}
+.particle:nth-child(1){left:8%;animation-duration:13s;animation-delay:0s}
+.particle:nth-child(2){left:22%;animation-duration:16s;animation-delay:4s;background:var(--amber);width:3px;height:3px}
+.particle:nth-child(3){left:38%;animation-duration:11s;animation-delay:1.5s}
+.particle:nth-child(4){left:55%;animation-duration:14s;animation-delay:6s;background:var(--blue)}
+.particle:nth-child(5){left:72%;animation-duration:12s;animation-delay:2.5s}
+.particle:nth-child(6){left:90%;animation-duration:15s;animation-delay:8s;background:var(--amber)}
+@keyframes float-up{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:0.7}90%{opacity:0.2}100%{transform:translateY(-5vh) scale(1.5);opacity:0}}
+
+.wrapper{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;width:100%;max-width:500px;padding:16px 20px;animation:fade-in 1s ease forwards}
+@keyframes fade-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.presenter-sub{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:8px;margin-bottom:6px}
+.pre-label{font-family:var(--ui);font-size:12px;font-weight:700;color:#90caf9;letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 12px rgba(144,202,249,0.8),0 0 30px rgba(144,202,249,0.4);animation:pre-flicker 11s infinite}
+.pre-vigyan{font-family:var(--head);font-size:clamp(20px,5vw,40px);font-weight:900;color:var(--teal);letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 18px rgba(100,255,218,0.9),0 0 45px rgba(100,255,218,0.5),0 0 80px rgba(100,255,218,0.2);animation:vigyan-flicker 13s infinite;line-height:1.1}
+@keyframes vigyan-flicker{0%,82%,100%{opacity:1}83%{opacity:0.5}84%{opacity:1}87%{opacity:0.3}88%{opacity:1}}
+.pre-dot{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:4px;font-weight:700}
+.pre-name{font-family:var(--ui);font-size:15px;font-weight:700;color:var(--amber);letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 16px rgba(255,171,64,0.9),0 0 50px rgba(255,171,64,0.5);animation:pre-flicker 11s infinite;animation-delay:-4s}
+@keyframes pre-flicker{0%,85%,100%{opacity:1}86%{opacity:0.6}87%{opacity:1}90%{opacity:0.35}91%{opacity:1}}
+
+.classified-badge{display:inline-block;border:2px solid var(--red);color:var(--red);font-family:var(--head);font-size:10px;letter-spacing:5px;padding:5px 18px;transform:rotate(-2deg);margin-bottom:14px;text-transform:uppercase;animation:badge-pulse 3s ease-in-out infinite}
+@keyframes badge-pulse{0%,100%{box-shadow:0 0 0 rgba(255,82,82,0)}50%{box-shadow:0 0 14px rgba(255,82,82,0.4)}}
+
+.logo{font-family:var(--head);font-size:clamp(46px,11vw,80px);font-weight:900;color:var(--green);letter-spacing:8px;line-height:1;text-align:center;text-shadow:0 0 20px rgba(0,230,118,.9),0 0 50px rgba(0,230,118,.5),0 0 100px rgba(0,230,118,.25),0 0 200px rgba(0,230,118,.1);animation:flicker 9s infinite}
+@keyframes flicker{0%,87%,100%{opacity:1}88%{opacity:.6}89%{opacity:1}92%{opacity:.4}93%{opacity:1}}
+
+.logo-sub{font-family:var(--ui);font-size:clamp(12px,2.3vw,15px);color:var(--amber);letter-spacing:5px;font-weight:500;text-transform:uppercase;margin-top:6px;text-align:center;text-shadow:0 0 18px rgba(255,171,64,.5)}
+
+.divider{width:320px;height:1px;background:linear-gradient(90deg,transparent,var(--green2),var(--amber),var(--green2),transparent);margin:16px auto;opacity:0.55}
+
+.terminal-card{background:rgba(8,13,16,0.87);border:1px solid var(--border2);border-top:2px solid var(--green);border-radius:6px;backdrop-filter:blur(10px);width:100%;overflow:hidden;box-shadow:0 0 50px rgba(0,230,118,.07),0 0 120px rgba(0,230,118,.03),inset 0 1px 0 rgba(0,230,118,.09)}
+
+.terminal-bar{background:rgba(5,8,10,0.95);border-bottom:1px solid var(--border);padding:9px 16px;display:flex;align-items:center;gap:7px}
+.t-dot{width:10px;height:10px;border-radius:50%}
+.t-dot.red{background:#ff5f57}.t-dot.amber{background:#febc2e}.t-dot.green{background:#28c840}
+.terminal-bar-title{font-family:var(--head);font-size:9px;color:var(--muted2);font-weight:700;letter-spacing:3px;margin-left:auto;margin-right:auto}
+
+.card-body{padding:26px 32px 28px}
+
+.section-label{font-family:var(--head);font-size:11px;color:var(--amber);letter-spacing:4px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.section-label::before{content:'▶';font-size:9px;color:var(--green)}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+
+.field{margin-bottom:18px}
+.field-label{font-family:var(--ui);font-size:17px;font-weight:700;color:var(--green3);letter-spacing:3px;text-transform:uppercase;margin-bottom:5px;display:block;text-shadow:0 0 10px rgba(185,246,202,.3)}
+.field-hint{font-family:var(--mono);font-size:10px;color:var(--muted2);font-weight:700;letter-spacing:1px;margin-bottom:7px}
+.input-wrap{position:relative}
+.input-wrap::before{content:'›';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--green);opacity:0.65;pointer-events:none;font-family:var(--mono)}
+
+input[type="text"],input[type="password"]{width:100%;background:rgba(5,8,10,0.8);border:1px solid var(--border2);border-radius:4px;color:var(--green);font-family:var(--mono);font-size:18px;letter-spacing:3px;padding:13px 14px 13px 36px;outline:none;transition:border-color .25s,box-shadow .25s;caret-color:var(--green)}
+input::placeholder{color:var(--muted);letter-spacing:2px;font-size:13px}
+input:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(0,230,118,.13),0 0 20px rgba(0,230,118,.08);background:rgba(0,230,118,.02)}
+input.error-field{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(255,82,82,.15)!important}
+
+.btn-access{width:100%;background:transparent;border:2px solid var(--green);border-radius:4px;color:var(--green);font-family:var(--head);font-size:17px;font-weight:700;letter-spacing:5px;text-transform:uppercase;padding:15px;cursor:pointer;margin-top:8px;position:relative;overflow:hidden;transition:color .3s,box-shadow .3s;text-shadow:0 0 10px rgba(0,230,118,.5)}
+.btn-access::before{content:'';position:absolute;inset:0;background:var(--green);transform:translateX(-101%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:0}
+.btn-access:hover::before{transform:translateX(0)}
+.btn-access:hover{color:var(--bg);box-shadow:0 0 35px rgba(0,230,118,.4);text-shadow:none}
+.btn-access span{position:relative;z-index:1}
+.btn-access:disabled{opacity:0.5;cursor:not-allowed}
+
+.status-line{height:32px;margin-top:14px;font-family:var(--mono);font-size:12px;letter-spacing:2px;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0;transition:opacity .3s}
+.status-line.show{opacity:1}
+.status-line.error{color:var(--red)}
+.status-line.success{color:var(--green)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink-dot 0.7s step-end infinite}
+@keyframes blink-dot{0%,100%{opacity:1}50%{opacity:0}}
+
+.card-footer{border-top:1px solid var(--border);padding:11px 32px;display:flex;align-items:center;justify-content:space-between}
+.footer-code{font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700;letter-spacing:2px}
+.footer-secure{font-family:var(--head);font-size:8px;color:var(--green);letter-spacing:2px;opacity:0.6}
+
+.team-badge{margin-top:18px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--muted2);font-weight:700;letter-spacing:2px}
+.team-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--green);opacity:0.6;animation:blink-dot 1.4s step-end infinite}
+
+.access-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s}
+.access-overlay.show{opacity:1;pointer-events:all}
+.access-granted-text{font-family:var(--head);font-size:clamp(30px,7vw,54px);font-weight:900;color:var(--green);letter-spacing:8px;text-shadow:0 0 40px rgba(0,230,118,.6),0 0 80px rgba(0,230,118,.3);animation:granted-pulse .8s ease-in-out infinite alternate}
+@keyframes granted-pulse{from{text-shadow:0 0 30px rgba(0,230,118,.5)}to{text-shadow:0 0 60px rgba(0,230,118,.9),0 0 100px rgba(0,230,118,.4)}}
+.access-sub{font-family:var(--ui);font-size:15px;color:var(--amber);letter-spacing:5px;margin-top:12px;text-transform:uppercase}
+.access-bar{width:300px;height:3px;background:var(--border);border-radius:2px;margin-top:28px;overflow:hidden}
+.access-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--green2),var(--teal));border-radius:2px;transition:width 1.8s cubic-bezier(.4,0,.2,1)}
+.access-bar-fill.run{width:100%}
+
+.back-link{margin-top:12px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;cursor:pointer;text-decoration:none;transition:color .2s}
+.back-link:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="laser-grid">
+  <div class="grid-floor"></div>
+  <div class="grid-ceil"></div>
+  <div class="laser-sweep"></div>
+  <div class="laser-sweep"></div>
+  <div class="laser-sweep"></div>
+  <div class="laser-h"></div>
+  <div class="laser-h"></div>
+</div>
+<div class="glow-center"></div>
+<div class="glow-amber"></div>
+<div class="skyline"></div>
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+</div>
+
+<div class="wrapper">
+  <div class="classified-badge">⚠ RESTRICTED ACCESS ⚠</div>
+
+  <div class="logo">CODE HEIST</div>
+
+  <div class="presenter-sub">
+    <span class="pre-label">presented by</span>
+    <span class="pre-vigyan">VIGYAN.IO</span>
+    <span class="pre-dot">×</span>
+    <span class="pre-name">Java &amp; OOP Community</span>
+  </div>
+
+  <div class="logo-sub">Inherit the Clues &nbsp;·&nbsp; Override the Competition</div>
+
+  <div class="divider"></div>
+
+  <div class="terminal-card">
+    <div class="terminal-bar">
+      <div class="t-dot red"></div>
+      <div class="t-dot amber"></div>
+      <div class="t-dot green"></div>
+      <div class="terminal-bar-title">TEAM AUTHENTICATION PORTAL</div>
+    </div>
+
+    <div class="card-body">
+      <div class="section-label">ENTER YOUR CREDENTIALS</div>
+
+      <div class="field">
+        <label class="field-label" for="team-name">Team Name</label>
+        <div class="field-hint">// Your registered team name</div>
+        <div class="input-wrap">
+          <input type="text" id="team-name" placeholder="e.g.  NULL POINTERS" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="access-code">Access Code</label>
+        <div class="field-hint">// 5-character code provided by organizers</div>
+        <div class="input-wrap">
+          <input type="password" id="access-code" placeholder="••••• " autocomplete="off" spellcheck="false" maxlength="5" style="text-transform:uppercase;letter-spacing:6px" />
+        </div>
+      </div>
+
+      <button class="btn-access" id="loginBtn" onclick="attemptLogin()">
+        <span>⬡ &nbsp; INITIATE ACCESS &nbsp; ⬡</span>
+      </button>
+
+      <div class="status-line" id="status-line">
+        <div class="status-dot"></div>
+        <span id="status-text"></span>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="footer-code">SYS::AUTH_v3.1.4 &nbsp;|&nbsp; Java &amp; OOP Community</div>
+      <div class="footer-secure">🔒 SECURE</div>
+    </div>
+  </div>
+
+  <div class="team-badge">
+    <div class="team-badge-dot"></div>
+    AWAITING AUTHENTICATION &nbsp;|&nbsp; SESSION ACTIVE
+  </div>
+  <a class="back-link" href="index.html">← BACK TO HOME</a>
+</div>
+
+<div class="access-overlay" id="access-overlay">
+  <div class="access-granted-text">ACCESS GRANTED</div>
+  <div class="access-sub" id="overlay-team-label">Welcome, Agent</div>
+  <div class="access-bar"><div class="access-bar-fill" id="access-bar-fill"></div></div>
+</div>
+
+<script type="module">
+import { loginTeam, setTeamLevel } from './firebase-config.js';
+
+let locked = false;
+
+function setStatus(msg, type) {
+  const line = document.getElementById('status-line');
+  const text = document.getElementById('status-text');
+  text.textContent = msg;
+  line.className = 'status-line show ' + type;
+}
+function clearStatus() {
+  document.getElementById('status-line').className = 'status-line';
+}
+
+window.attemptLogin = async function() {
+  if (locked) return;
+  const teamNameVal = document.getElementById('team-name').value.trim();
+  const codeVal     = document.getElementById('access-code').value.trim().toUpperCase();
+
+  if (!teamNameVal || !codeVal) {
+    setStatus('⚠  ALL FIELDS REQUIRED', 'error');
+    return;
+  }
+  if (codeVal.length !== 5) {
+    setStatus('⚠  ACCESS CODE MUST BE 5 CHARACTERS', 'error');
+    return;
+  }
+
+  locked = true;
+  document.getElementById('loginBtn').disabled = true;
+  setStatus('VERIFYING CREDENTIALS…', 'success');
+
+  try {
+    const team = await loginTeam(teamNameVal, codeVal);
+    if (!team) {
+      locked = false;
+      document.getElementById('loginBtn').disabled = false;
+      setStatus('✖  ACCESS DENIED — INVALID CREDENTIALS', 'error');
+      ['team-name','access-code'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.add('error-field');
+        setTimeout(() => el.classList.remove('error-field'), 1200);
+      });
+      return;
+    }
+
+    // Store session
+    sessionStorage.setItem('ch_team_id',   team.id);
+    sessionStorage.setItem('ch_team_name', team.teamName);
+    sessionStorage.setItem('ch_team_num',  team.teamNumber);
+    sessionStorage.setItem('ch_level',     String(team.currentLevel || 1));
+
+    setStatus('✔  CREDENTIALS VERIFIED — GRANTING ACCESS', 'success');
+
+    const overlay = document.getElementById('access-overlay');
+    document.getElementById('overlay-team-label').textContent = `Welcome, ${team.teamName}`;
+    overlay.classList.add('show');
+    setTimeout(() => document.getElementById('access-bar-fill').classList.add('run'), 100);
+
+    const targetLevel = team.currentLevel || 1;
+    setTimeout(() => {
+      window.location.href = `level${targetLevel}.html`;
+    }, 2400);
+
+  } catch(e) {
+    locked = false;
+    document.getElementById('loginBtn').disabled = false;
+    setStatus('✖  CONNECTION ERROR — TRY AGAIN', 'error');
+    console.error(e);
+  }
+};
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') window.attemptLogin(); });
+['team-name','access-code'].forEach(id => {
+  document.getElementById(id).addEventListener('input', clearStatus);
+});
+</script>
+</body>
+</html>

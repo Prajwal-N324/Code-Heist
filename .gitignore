@@ -1,6 +1,15 @@
-node_modules/
-.next/
-out/
-build/
-.env*.local
+# API keys — never commit these
+config.js
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+*.swp

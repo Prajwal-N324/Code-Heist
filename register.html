@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODE HEIST — AGENT RECRUITMENT</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#05080a;--bg2:#080d10;--bg3:#0c1318;--border:#112233;--border2:#1a3344;--green:#00e676;--green2:#00c853;--green3:#b9f6ca;--red:#ff5252;--amber:#ffab40;--blue:#40c4ff;--teal:#64ffda;--purple:#b388ff;--text:#cfd8dc;--muted:#607d8b;--muted2:#78909c;--mono:'Share Tech Mono',monospace;--ui:'Rajdhani',sans-serif;--head:'Orbitron',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:20;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.05) 3px,rgba(0,0,0,.05) 4px)}
+body::after{content:'';position:fixed;inset:0;z-index:19;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.3}
+.laser-grid{position:fixed;inset:0;z-index:0;pointer-events:none;perspective:500px;overflow:hidden}
+.grid-floor{position:absolute;bottom:0;left:-50%;width:200%;height:80%;transform:rotateX(65deg);transform-origin:bottom center;background-image:linear-gradient(rgba(0,230,118,0.13) 1px,transparent 1px),linear-gradient(90deg,rgba(0,230,118,0.13) 1px,transparent 1px);background-size:60px 60px;animation:grid-scroll 5s linear infinite;mask-image:linear-gradient(to top,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.2) 40%,transparent 75%)}
+@keyframes grid-scroll{0%{background-position:0 0}100%{background-position:0 60px}}
+.grid-ceil{position:absolute;top:0;left:-50%;width:200%;height:55%;transform:rotateX(-65deg);transform-origin:top center;background-image:linear-gradient(rgba(255,171,64,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,171,64,0.06) 1px,transparent 1px);background-size:60px 60px;animation:grid-scroll 6s linear infinite;mask-image:linear-gradient(to bottom,rgba(0,0,0,0.4) 0%,rgba(0,0,0,0.1) 40%,transparent 75%)}
+.laser-sweep{position:absolute;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent 0%,rgba(0,230,118,0.5) 40%,rgba(0,230,118,0.8) 50%,rgba(0,230,118,0.5) 60%,transparent 100%);filter:blur(1px);animation:laser-move linear infinite;opacity:0}
+.laser-sweep:nth-child(3){animation-duration:8s;animation-delay:0s}.laser-sweep:nth-child(4){animation-duration:11s;animation-delay:3.5s;background:linear-gradient(180deg,transparent,rgba(255,171,64,0.35),rgba(255,171,64,0.6),rgba(255,171,64,0.35),transparent)}.laser-sweep:nth-child(5){animation-duration:9s;animation-delay:6s}
+@keyframes laser-move{0%{left:-2px;opacity:0}5%{opacity:1}95%{opacity:1}100%{left:100%;opacity:0}}
+.laser-h{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,230,118,0.4),rgba(0,230,118,0.7),rgba(0,230,118,0.4),transparent);filter:blur(1px);animation:laser-h-move linear infinite;opacity:0}
+.laser-h:nth-child(6){animation-duration:12s;animation-delay:1s}.laser-h:nth-child(7){animation-duration:15s;animation-delay:7s;background:linear-gradient(90deg,transparent,rgba(255,171,64,0.25),rgba(255,171,64,0.5),rgba(255,171,64,0.25),transparent)}
+@keyframes laser-h-move{0%{top:-2px;opacity:0}5%{opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
+.glow-center{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:650px;height:650px;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,rgba(0,230,118,.07) 0%,rgba(0,100,60,.02) 45%,transparent 70%);animation:pglow 5s ease-in-out infinite}
+.glow-amber{position:fixed;top:10%;right:5%;width:300px;height:300px;pointer-events:none;z-index:1;background:radial-gradient(circle,rgba(255,171,64,.055) 0%,transparent 65%);animation:pglow2 8s ease-in-out infinite}
+@keyframes pglow{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}}
+@keyframes pglow2{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.7;transform:scale(1.15)}}
+.skyline{position:fixed;bottom:0;left:0;right:0;height:32vh;pointer-events:none;z-index:2;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 280' preserveAspectRatio='xMidYMax slice'%3E%3Cg fill='%23040908'%3E%3Crect x='0' y='140' width='60' height='140'/%3E%3Crect x='30' y='100' width='40' height='180'/%3E%3Crect x='80' y='120' width='50' height='160'/%3E%3Crect x='140' y='80' width='30' height='200'/%3E%3Crect x='180' y='130' width='70' height='150'/%3E%3Crect x='260' y='90' width='45' height='190'/%3E%3Crect x='360' y='70' width='55' height='210'/%3E%3Crect x='430' y='100' width='65' height='180'/%3E%3Crect x='600' y='60' width='50' height='220'/%3E%3Crect x='715' y='90' width='60' height='190'/%3E%3Crect x='945' y='80' width='50' height='200'/%3E%3Crect x='1120' y='60' width='45' height='220'/%3E%3Crect x='1290' y='100' width='60' height='180'/%3E%3C/g%3E%3Cg fill='%2300e676' opacity='0.2'%3E%3Crect x='154' y='52' width='4' height='8'/%3E%3Crect x='603' y='52' width='4' height='8'/%3E%3C/g%3E%3C/svg%3E") no-repeat bottom;background-size:cover;opacity:0.75}
+.particles{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.particle{position:absolute;width:2px;height:2px;border-radius:50%;background:var(--green);opacity:0;animation:float-up linear infinite}
+.particle:nth-child(1){left:8%;animation-duration:13s;animation-delay:0s}.particle:nth-child(2){left:22%;animation-duration:16s;animation-delay:4s;background:var(--amber)}.particle:nth-child(3){left:38%;animation-duration:11s;animation-delay:1.5s}.particle:nth-child(4){left:55%;animation-duration:14s;animation-delay:6s;background:var(--blue)}.particle:nth-child(5){left:72%;animation-duration:12s;animation-delay:2.5s}.particle:nth-child(6){left:90%;animation-duration:15s;animation-delay:8s;background:var(--amber)}
+@keyframes float-up{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:0.7}90%{opacity:0.2}100%{transform:translateY(-5vh) scale(1.5);opacity:0}}
+
+.page{position:relative;z-index:10;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 80px}
+.header{display:flex;flex-direction:column;align-items:center;margin-bottom:32px;animation:fade-in 0.8s ease forwards}
+@keyframes fade-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.classified-badge{display:inline-block;border:2px solid var(--red);color:var(--red);font-family:var(--head);font-size:10px;letter-spacing:5px;padding:5px 18px;transform:rotate(-2deg);margin-bottom:14px;animation:badge-pulse 3s ease-in-out infinite}
+@keyframes badge-pulse{0%,100%{box-shadow:0 0 0 rgba(255,82,82,0)}50%{box-shadow:0 0 14px rgba(255,82,82,0.4)}}
+.logo{font-family:var(--head);font-size:clamp(46px,11vw,80px);font-weight:900;color:var(--green);letter-spacing:8px;line-height:1;text-align:center;text-shadow:0 0 20px rgba(0,230,118,.9),0 0 50px rgba(0,230,118,.5),0 0 100px rgba(0,230,118,.25);animation:flicker 9s infinite}
+@keyframes flicker{0%,87%,100%{opacity:1}88%{opacity:.6}89%{opacity:1}92%{opacity:.4}93%{opacity:1}}
+.presenter-sub{display:flex;flex-direction:column;align-items:center;gap:1px;margin-top:8px;margin-bottom:4px}
+.pre-label{font-family:var(--ui);font-size:12px;font-weight:700;color:var(--blue);letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 12px rgba(64,196,255,0.8);animation:pre-flicker 11s infinite}
+.pre-name{font-family:var(--ui);font-size:15px;font-weight:700;color:var(--blue);letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 16px rgba(64,196,255,0.9);animation:pre-flicker 11s infinite;animation-delay:-4s}
+@keyframes pre-flicker{0%,85%,100%{opacity:1}86%{opacity:0.6}87%{opacity:1}90%{opacity:0.35}91%{opacity:1}}
+.logo-sub{font-family:var(--ui);font-size:clamp(12px,2.3vw,15px);color:var(--amber);letter-spacing:5px;font-weight:500;text-transform:uppercase;margin-top:6px;text-align:center;text-shadow:0 0 18px rgba(255,171,64,.5)}
+.divider{width:320px;height:1px;background:linear-gradient(90deg,transparent,var(--green2),var(--amber),var(--green2),transparent);margin:14px auto;opacity:0.55}
+
+.mission-brief{max-width:680px;background:rgba(8,13,16,0.75);border:1px solid var(--border2);border-left:3px solid var(--amber);border-radius:4px;padding:18px 24px;margin-bottom:28px;animation:fade-in 1s ease 0.2s both}
+.brief-label{font-family:var(--head);font-size:9px;color:var(--amber);letter-spacing:4px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.brief-label::before{content:'▶';color:var(--green);font-size:8px}
+.brief-text{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted2);line-height:1.8;letter-spacing:1px}
+.brief-text span{color:var(--green3)}.brief-text em{color:var(--amber);font-style:normal}
+
+.terminal-card{background:rgba(8,13,16,0.87);border:1px solid var(--border2);border-top:2px solid var(--green);border-radius:6px;backdrop-filter:blur(10px);width:100%;max-width:760px;overflow:hidden;box-shadow:0 0 50px rgba(0,230,118,.07),0 0 120px rgba(0,230,118,.03),inset 0 1px 0 rgba(0,230,118,.09);animation:fade-in 1s ease 0.4s both}
+.terminal-bar{background:rgba(5,8,10,0.95);border-bottom:1px solid var(--border);padding:9px 16px;display:flex;align-items:center;gap:7px}
+.t-dot{width:10px;height:10px;border-radius:50%}.t-dot.red{background:#ff5f57}.t-dot.amber{background:#febc2e}.t-dot.green{background:#28c840}
+.terminal-bar-title{font-family:var(--head);font-size:9px;color:var(--muted2);font-weight:700;letter-spacing:3px;margin-left:auto;margin-right:auto}
+.card-body{padding:30px 36px 36px}
+.section-label{font-family:var(--head);font-size:11px;color:var(--amber);letter-spacing:4px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.section-label::before{content:'▶';font-size:9px;color:var(--green)}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+.section-divider{height:1px;background:linear-gradient(90deg,var(--border2),transparent);margin:28px 0}
+
+.form-row{display:grid;gap:18px;margin-bottom:18px}
+.form-row.cols-2{grid-template-columns:1fr 1fr}
+.form-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-row.cols-1{grid-template-columns:1fr}
+@media(max-width:600px){.form-row.cols-2,.form-row.cols-3{grid-template-columns:1fr}.card-body{padding:22px 18px 28px}}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.field-label{font-family:var(--ui);font-size:13px;font-weight:700;color:var(--green3);letter-spacing:3px;text-transform:uppercase;display:block;text-shadow:0 0 10px rgba(185,246,202,.3)}
+.field-hint{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:2px}
+.input-wrap{position:relative}
+.input-wrap::before{content:'›';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--green);opacity:0.65;pointer-events:none;font-family:var(--mono)}
+.field input,.field select{width:100%;background:rgba(5,8,10,0.8);border:1px solid var(--border2);border-radius:4px;color:var(--green);font-family:var(--mono);font-size:14px;letter-spacing:2px;padding:11px 14px 11px 36px;outline:none;transition:border-color .25s,box-shadow .25s;caret-color:var(--green);-webkit-appearance:none;appearance:none}
+.field input::placeholder{color:var(--muted);letter-spacing:2px;font-size:11px}
+.field input:focus,.field select:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(0,230,118,.13),0 0 20px rgba(0,230,118,.08);background:rgba(0,230,118,.02)}
+.field input.error,.field select.error{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(255,82,82,.13)!important}
+.field-error{font-size:10px;color:var(--red);letter-spacing:1px;min-height:14px;padding-left:2px}
+.select-wrap{position:relative}
+.select-wrap::before{content:'›';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--green);opacity:0.65;pointer-events:none;font-family:var(--mono);z-index:1}
+.select-wrap::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted2);pointer-events:none}
+
+.agent-card{background:rgba(5,8,10,0.6);border:1px solid var(--border);border-radius:4px;padding:20px 22px;margin-bottom:16px;position:relative;transition:border-color .2s}
+.agent-card:hover{border-color:var(--border2)}
+.agent-card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.agent-number{font-family:var(--head);font-size:11px;background:rgba(0,230,118,.1);border:1px solid var(--green);color:var(--green);padding:3px 10px;border-radius:2px;letter-spacing:2px}
+.agent-role{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:2px}
+.agent-card-header::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+
+.btn-submit{width:100%;background:transparent;border:2px solid var(--green);border-radius:4px;color:var(--green);font-family:var(--head);font-size:17px;font-weight:700;letter-spacing:5px;text-transform:uppercase;padding:16px;cursor:pointer;margin-top:10px;position:relative;overflow:hidden;transition:color .3s,box-shadow .3s;text-shadow:0 0 10px rgba(0,230,118,.5)}
+.btn-submit::before{content:'';position:absolute;inset:0;background:var(--green);transform:translateX(-101%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:0}
+.btn-submit:hover::before{transform:translateX(0)}
+.btn-submit:hover{color:var(--bg);box-shadow:0 0 35px rgba(0,230,118,.4);text-shadow:none}
+.btn-submit span{position:relative;z-index:1}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed}
+
+.card-footer{border-top:1px solid var(--border);padding:11px 36px;display:flex;align-items:center;justify-content:space-between}
+.footer-code{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:2px}
+.footer-secure{font-family:var(--head);font-size:8px;color:var(--green);letter-spacing:2px;opacity:0.6}
+
+.team-badge{margin-top:18px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:2px}
+.team-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--green);opacity:0.6;animation:blink-dot 1.4s step-end infinite}
+@keyframes blink-dot{0%,100%{opacity:1}50%{opacity:0}}
+
+.success-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s;gap:16px;text-align:center;padding:20px}
+.success-overlay.show{opacity:1;pointer-events:all}
+.success-title{font-family:var(--head);font-size:clamp(26px,6vw,48px);font-weight:900;color:var(--green);letter-spacing:6px;text-shadow:0 0 40px rgba(0,230,118,.6),0 0 80px rgba(0,230,118,.3);animation:granted-pulse .8s ease-in-out infinite alternate}
+@keyframes granted-pulse{from{text-shadow:0 0 30px rgba(0,230,118,.5)}to{text-shadow:0 0 60px rgba(0,230,118,.9),0 0 100px rgba(0,230,118,.4)}}
+.success-sub{font-family:var(--ui);font-size:17px;color:var(--amber);letter-spacing:4px;text-transform:uppercase}
+.access-code-box{background:rgba(0,230,118,.06);border:1px solid var(--green);padding:16px 32px;border-radius:4px;text-align:center}
+.access-code-label{font-family:var(--ui);font-size:11px;color:var(--muted2);letter-spacing:3px;margin-bottom:8px;text-transform:uppercase}
+.access-code-value{font-family:var(--head);font-size:36px;color:var(--green);letter-spacing:16px;text-shadow:0 0 30px rgba(0,230,118,.6)}
+.team-num-value{font-family:var(--mono);font-size:14px;color:var(--amber);letter-spacing:4px;margin-top:8px}
+.success-msg{font-family:var(--mono);font-size:11px;color:var(--muted2);max-width:440px;line-height:1.8;letter-spacing:1px;margin-top:4px}
+.success-bar{width:300px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:12px}
+.success-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--green2),var(--teal));border-radius:2px;transition:width 2s cubic-bezier(.4,0,.2,1)}
+.success-bar-fill.run{width:100%}
+.back-link{margin-top:12px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-decoration:none;transition:color .2s}
+.back-link:hover{color:var(--text)}
+.name-warn{font-size:10px;color:var(--amber);letter-spacing:1px;min-height:14px;padding-left:2px;display:none}
+.name-warn.show{display:block}
+</style>
+</head>
+<body>
+
+<div class="laser-grid">
+  <div class="grid-floor"></div><div class="grid-ceil"></div>
+  <div class="laser-sweep"></div><div class="laser-sweep"></div><div class="laser-sweep"></div>
+  <div class="laser-h"></div><div class="laser-h"></div>
+</div>
+<div class="glow-center"></div><div class="glow-amber"></div><div class="skyline"></div>
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+</div>
+
+<div class="success-overlay" id="success-overlay">
+  <div class="success-title">SQUAD ENLISTED</div>
+  <div class="success-sub">Welcome to the Heist</div>
+  <div class="access-code-box">
+    <div class="access-code-label">Your Access Code</div>
+    <div class="access-code-value" id="display-code">—</div>
+    <div class="team-num-value" id="display-team-num">—</div>
+  </div>
+  <div class="success-msg">
+    Your crew has been cleared for infiltration.<br>
+    <strong style="color:var(--amber)">SAVE THIS ACCESS CODE — you'll need it to login!</strong><br>
+    <em style="color:var(--muted2)">Inherit the Clues · Override the Competition</em>
+  </div>
+  <div class="success-bar"><div class="success-bar-fill" id="success-bar-fill"></div></div>
+</div>
+
+<div class="page">
+  <div class="header">
+    <div class="classified-badge">⚠ AGENT RECRUITMENT ⚠</div>
+    <div class="logo">CODE HEIST</div>
+    <div class="presenter-sub">
+      <span class="pre-label">presented by</span>
+      <span class="pre-name">Java &amp; OOP Community</span>
+    </div>
+    <div class="logo-sub">Inherit the Clues &nbsp;·&nbsp; Override the Competition</div>
+    <div class="divider"></div>
+  </div>
+
+  <div class="mission-brief">
+    <div class="brief-label">OPERATION BRIEFING</div>
+    <div class="brief-text">
+      The vault is sealed. The clock is running. Four levels of <span>Java &amp; OOP</span> mastery stand between your crew and the ultimate heist.
+      To gain clearance, you must register your squad below. Each team must have <em>2–4 agents</em>.
+      Once enlisted, your <em>unique access code</em> will be generated automatically — save it carefully.<br><br>
+      <em>// Only registered agents may participate. No walk-ins on the day of the operation.</em>
+    </div>
+  </div>
+
+  <div class="terminal-card">
+    <div class="terminal-bar">
+      <div class="t-dot red"></div><div class="t-dot amber"></div><div class="t-dot green"></div>
+      <div class="terminal-bar-title">SQUAD REGISTRATION TERMINAL</div>
+    </div>
+
+    <div class="card-body">
+      <!-- SECTION 1: SQUAD INFO -->
+      <div class="section-label">SQUAD IDENTITY</div>
+
+      <div class="form-row cols-2">
+        <div class="field">
+          <label class="field-label" for="team-name">Team Name</label>
+          <div class="field-hint">// Your crew's codename for the operation</div>
+          <div class="input-wrap">
+            <input type="text" id="team-name" placeholder="e.g.  NULL POINTERS" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="name-warn" id="name-warn"></div>
+          <div class="field-error" id="err-team-name"></div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="department">Department</label>
+          <div class="field-hint">// Your academic division</div>
+          <div class="select-wrap">
+            <select id="department">
+              <option value="" disabled selected>— SELECT DEPT —</option>
+              <option value="CSE">CSE</option><option value="ISE">ISE</option>
+              <option value="ECE">ECE</option><option value="EEE">EEE</option>
+              <option value="ME">ME</option><option value="CE">CE</option>
+              <option value="AIDS">AIDS</option><option value="AIML">AIML</option>
+              <option value="CSD">CSD</option><option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field-error" id="err-department"></div>
+        </div>
+      </div>
+
+      <div class="form-row cols-2">
+        <div class="field">
+          <label class="field-label" for="year">Year</label>
+          <div class="field-hint">// Current academic year of most members</div>
+          <div class="select-wrap">
+            <select id="year">
+              <option value="" disabled selected>— SELECT YEAR —</option>
+              <option value="1">1st Year</option><option value="2">2nd Year</option>
+              <option value="3">3rd Year</option><option value="4">4th Year</option>
+            </select>
+          </div>
+          <div class="field-error" id="err-year"></div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="team-size">Team Size</label>
+          <div class="field-hint">// Number of agents in your crew (2–4)</div>
+          <div class="select-wrap">
+            <select id="team-size" onchange="updateAgentCards()">
+              <option value="" disabled selected>— SELECT SIZE —</option>
+              <option value="2">2 Agents</option>
+              <option value="3">3 Agents</option>
+              <option value="4">4 Agents</option>
+            </select>
+          </div>
+          <div class="field-error" id="err-team-size"></div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- SECTION 2: AGENT PROFILES -->
+      <div class="section-label">AGENT PROFILES</div>
+      <div id="agents-container">
+        <!-- Agent 1 -->
+        <div class="agent-card" id="agent-card-1">
+          <div class="agent-card-header"><div class="agent-number">AGENT-01</div><div class="agent-role">// Team Lead</div></div>
+          <div class="form-row cols-2">
+            <div class="field">
+              <label class="field-label" for="name-1">Full Name</label>
+              <div class="field-hint">// Agent's real identity</div>
+              <div class="input-wrap"><input type="text" id="name-1" placeholder="e.g.  ALEX CIPHER" autocomplete="off" spellcheck="false" /></div>
+              <div class="field-error" id="err-name-1"></div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="usn-1">USN</label>
+              <div class="field-hint">// University Serial Number</div>
+              <div class="input-wrap"><input type="text" id="usn-1" placeholder="e.g.  1XX22CS001" autocomplete="off" spellcheck="false" style="text-transform:uppercase" /></div>
+              <div class="field-error" id="err-usn-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent 2 -->
+        <div class="agent-card" id="agent-card-2">
+          <div class="agent-card-header"><div class="agent-number">AGENT-02</div><div class="agent-role">// Field Operative</div></div>
+          <div class="form-row cols-2">
+            <div class="field">
+              <label class="field-label" for="name-2">Full Name</label>
+              <div class="field-hint">// Agent's real identity</div>
+              <div class="input-wrap"><input type="text" id="name-2" placeholder="e.g.  MORGAN STACK" autocomplete="off" spellcheck="false" /></div>
+              <div class="field-error" id="err-name-2"></div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="usn-2">USN</label>
+              <div class="field-hint">// University Serial Number</div>
+              <div class="input-wrap"><input type="text" id="usn-2" placeholder="e.g.  1XX22CS002" autocomplete="off" spellcheck="false" style="text-transform:uppercase" /></div>
+              <div class="field-error" id="err-usn-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent 3 (hidden by default) -->
+        <div class="agent-card" id="agent-card-3" style="display:none">
+          <div class="agent-card-header"><div class="agent-number">AGENT-03</div><div class="agent-role">// Tech Specialist</div></div>
+          <div class="form-row cols-2">
+            <div class="field">
+              <label class="field-label" for="name-3">Full Name</label>
+              <div class="input-wrap"><input type="text" id="name-3" placeholder="e.g.  CASEY RUNTIME" autocomplete="off" spellcheck="false" /></div>
+              <div class="field-error" id="err-name-3"></div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="usn-3">USN</label>
+              <div class="input-wrap"><input type="text" id="usn-3" placeholder="e.g.  1XX22CS003" autocomplete="off" spellcheck="false" style="text-transform:uppercase" /></div>
+              <div class="field-error" id="err-usn-3"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent 4 (hidden by default) -->
+        <div class="agent-card" id="agent-card-4" style="display:none">
+          <div class="agent-card-header"><div class="agent-number">AGENT-04</div><div class="agent-role">// Infiltration Expert</div></div>
+          <div class="form-row cols-2">
+            <div class="field">
+              <label class="field-label" for="name-4">Full Name</label>
+              <div class="input-wrap"><input type="text" id="name-4" placeholder="e.g.  RILEY COMPILE" autocomplete="off" spellcheck="false" /></div>
+              <div class="field-error" id="err-name-4"></div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="usn-4">USN</label>
+              <div class="input-wrap"><input type="text" id="usn-4" placeholder="e.g.  1XX22CS004" autocomplete="off" spellcheck="false" style="text-transform:uppercase" /></div>
+              <div class="field-error" id="err-usn-4"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-submit" id="submitBtn" onclick="submitRegistration()">
+        <span>⬡ &nbsp; ENLIST SQUAD &nbsp; ⬡</span>
+      </button>
+      <div class="field-error" id="err-global" style="text-align:center;margin-top:10px;font-size:12px"></div>
+    </div>
+
+    <div class="card-footer">
+      <div class="footer-code">SYS::REG_v1.0 &nbsp;|&nbsp; Java &amp; OOP Community</div>
+      <div class="footer-secure">🔒 FIREBASE SECURED</div>
+    </div>
+  </div>
+
+  <div class="team-badge">
+    <div class="team-badge-dot"></div>
+    REGISTRATION OPEN &nbsp;|&nbsp; DATA ENCRYPTED
+  </div>
+  <a class="back-link" href="index.html">← BACK TO HOME</a>
+</div>
+
+<script type="module">
+import { registerTeam, teamNameExists, generateUniqueAccessCode, suggestAlternateTeamName } from './firebase-config.js';
+
+// Show/hide agent cards based on team size
+window.updateAgentCards = function() {
+  const size = parseInt(document.getElementById('team-size').value) || 2;
+  [3,4].forEach(n => {
+    document.getElementById(`agent-card-${n}`).style.display = n <= size ? 'block' : 'none';
+  });
+};
+
+// Auto-generate team number (TEAM-XX format based on timestamp)
+function generateTeamNumber() {
+  return 'TEAM-' + String(Date.now()).slice(-4);
+}
+
+function setErr(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; }
+}
+function clearErrs() {
+  ['team-name','department','year','team-size','name-1','usn-1','name-2','usn-2','name-3','usn-3','name-4','usn-4','global'].forEach(id => setErr('err-'+id, ''));
+}
+
+// Debounced name check
+let nameCheckTimer = null;
+document.getElementById('team-name').addEventListener('input', () => {
+  clearTimeout(nameCheckTimer);
+  nameCheckTimer = setTimeout(async () => {
+    const name = document.getElementById('team-name').value.trim();
+    if (!name) return;
+    const warn = document.getElementById('name-warn');
+    const taken = await teamNameExists(name);
+    if (taken) {
+      const alt = await suggestAlternateTeamName(name);
+      warn.textContent = `⚠ Name already taken. Suggested: "${alt}"`;
+      warn.classList.add('show');
+    } else {
+      warn.classList.remove('show');
+      warn.textContent = '';
+    }
+  }, 500);
+});
+
+window.submitRegistration = async function() {
+  clearErrs();
+  let valid = true;
+
+  const teamName   = document.getElementById('team-name').value.trim();
+  const department = document.getElementById('department').value;
+  const year       = document.getElementById('year').value;
+  const teamSize   = parseInt(document.getElementById('team-size').value) || 0;
+
+  if (!teamName)    { setErr('err-team-name','Required'); valid = false; }
+  if (!department)  { setErr('err-department','Required'); valid = false; }
+  if (!year)        { setErr('err-year','Required'); valid = false; }
+  if (!teamSize)    { setErr('err-team-size','Required'); valid = false; }
+
+  const agents = [];
+  for (let i = 1; i <= teamSize; i++) {
+    const name = document.getElementById(`name-${i}`)?.value.trim() || '';
+    const usn  = document.getElementById(`usn-${i}`)?.value.trim().toUpperCase() || '';
+    if (!name) { setErr(`err-name-${i}`, 'Required'); valid = false; }
+    if (!usn)  { setErr(`err-usn-${i}`,  'Required'); valid = false; }
+    agents.push({ name, usn });
+  }
+  if (!valid) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'ENLISTING SQUAD…';
+
+  try {
+    // Check name uniqueness
+    const taken = await teamNameExists(teamName);
+    if (taken) {
+      const alt = await suggestAlternateTeamName(teamName);
+      setErr('err-team-name', `Name taken. Try: "${alt}"`);
+      btn.disabled = false;
+      btn.querySelector('span').textContent = '⬡ \u00a0 ENLIST SQUAD \u00a0 ⬡';
+      return;
+    }
+
+    const accessCode  = await generateUniqueAccessCode();
+    const teamNumber  = generateTeamNumber();
+
+    await registerTeam({ teamName, teamNumber, accessCode, department, year, teamSize, agents });
+
+    // Show success overlay
+    document.getElementById('display-code').textContent = accessCode;
+    document.getElementById('display-team-num').textContent = teamNumber;
+    document.getElementById('success-overlay').classList.add('show');
+    setTimeout(() => document.getElementById('success-bar-fill').classList.add('run'), 100);
+
+  } catch(e) {
+    setErr('err-global', '✖ Registration failed: ' + e.message);
+    btn.disabled = false;
+    btn.querySelector('span').textContent = '⬡ \u00a0 ENLIST SQUAD \u00a0 ⬡';
+  }
+};
+</script>
+</body>
+</html>
