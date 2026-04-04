@@ -21,6 +21,12 @@ const db  = getFirestore(app);
 // ─── Helpers ────────────────────────────────────────────────
 export { db, collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp };
 
+/** Save team's edited code. */
+export async function saveTeamEditedCode(teamId, levelNum, editedCode) {
+  const field = `progress.level${levelNum}.editedCode`;
+  await updateDoc(doc(db, 'teams', teamId), { [field]: editedCode });
+}
+
 /** Generate a unique 5-char uppercase alphanumeric access code */
 export async function generateUniqueAccessCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

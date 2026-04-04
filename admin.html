@@ -312,6 +312,13 @@ function renderLevelForm(n) {
         <textarea id="f-question" placeholder="Paste the Java code or puzzle for this team…" style="min-height:200px;font-family:monospace">${esc(cfg.question||'')}</textarea>
       </div>
       <div class="field-group">
+        <label>CORRECT CODE LOGIC (Reference) <span>Gemini compares the team logic against this code</span></label>
+        <textarea id="f-correct-code" placeholder="Paste the actual correct code for logic comparison..." style="min-height:200px;font-family:monospace">${esc(cfg.correctCode||'')}</textarea>
+        <div class="field-hint">Team won't see this. Given to Gemini compiler for logical comparison.</div>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field-group">
         <label>CORRECT ANSWER <span>exact string Gemini checks against</span></label>
         <input type="text" id="f-answer" value="${esc(cfg.answer||'')}" placeholder="e.g. HEIST RELAY: NORTH-WING-5" />
         <div class="field-hint">Case-sensitive. Gemini AI validates the team's submission against this.</div>
@@ -382,6 +389,7 @@ window.collectAndSave = async function(n, showFeedback) {
 
   const lv = {
     question:          (document.getElementById('f-question')?.value || ''),
+    correctCode:       (document.getElementById('f-correct-code')?.value || ''),
     answer:            (document.getElementById('f-answer')?.value.trim() || ''),
     clueLetterCorrect: (document.getElementById('f-clue-letter')?.value.trim().toUpperCase() || ''),
     location:          (document.getElementById('f-location')?.value.trim() || ''),

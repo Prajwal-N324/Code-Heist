@@ -57,9 +57,14 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
 .code-header{padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .code-filename{font-family:var(--ui);font-size:10px;color:var(--muted2);letter-spacing:2px;font-weight:700;text-transform:uppercase}
 .java-tag{font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(64,196,255,.08);color:var(--blue);border:1px solid rgba(64,196,255,.2)}
-.code-scroll{flex:1;overflow-y:auto;padding:14px;background:var(--bg)}
+.code-scroll{flex:1;overflow-y:auto;padding:14px;background:var(--bg);display:flex;flex-direction:column}
 .code-scroll::-webkit-scrollbar{width:3px}.code-scroll::-webkit-scrollbar-thumb{background:var(--border)}
-pre{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8fbc8f;white-space:pre-wrap;word-break:break-word}
+.code-textarea{width:100%;flex:1;min-height:200px;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8fbc8f;resize:vertical}
+.code-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.btn-compile{background:rgba(0,230,118,.1);border:1px solid var(--green);color:var(--green);font-family:var(--head);font-size:10px;padding:6px 12px;border-radius:2px;cursor:pointer;letter-spacing:2px;transition:all .2s;}
+.btn-compile:hover{background:var(--green);color:var(--bg)}
+.btn-reset{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:10px;padding:6px 12px;border-radius:2px;cursor:pointer;transition:all .2s;}
+.btn-reset:hover{border-color:var(--red);color:var(--red)}
 .hint-box{padding:12px 16px;border-top:1px solid rgba(0,230,118,.1);background:rgba(0,230,118,.015)}
 .hint-label{font-family:var(--head);font-size:8px;color:var(--green);letter-spacing:3px;margin-bottom:6px}
 .hint-items{display:flex;flex-direction:column;gap:4px}
@@ -167,7 +172,13 @@ pre{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8fbc8f;whit
       <div class="code-header">
         <div class="code-filename">Vault.java</div><div class="java-tag">JAVA</div>
       </div>
-      <div class="code-scroll"><pre id="code-panel">// Loading question…</pre></div>
+      <div class="code-scroll">
+        <textarea id="code-panel" class="code-textarea" spellcheck="false">// Loading question…</textarea>
+        <div class="code-actions">
+          <button class="btn-compile" onclick="compileCode()">▶ COMPILE & CHECK LOGIC</button>
+          <button class="btn-reset" onclick="resetCode()">↺ RESET CODE</button>
+        </div>
+      </div>
       <div class="no-cfg-notice" id="no-cfg-notice">
         ⚠ No question configured for your team yet.<br>
         Ask your organizer to set it up in the Admin panel, then refresh.
@@ -202,9 +213,9 @@ pre{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8fbc8f;whit
       <div class="chat" id="chat"></div>
       <div class="input-row">
         <div class="prompt-lbl">heist$</div>
-        <input id="userinput" placeholder="submit exact output of the method…" autocomplete="off" />
+        <input id="userinput" placeholder="compile code to unlock answer submission…" autocomplete="off" disabled />
         <span class="btn-hint" style="opacity:.35;cursor:not-allowed;border-color:var(--muted);color:var(--muted)" title="Hints disabled in competition mode">HINTS OFF</span>
-        <button class="btn-send" onclick="send()">SEND ↵</button>
+        <button id="btn-send" class="btn-send" onclick="send()" disabled style="opacity:0.5;cursor:not-allowed;">SEND ↵</button>
       </div>
     </div>
   </div>
@@ -222,7 +233,7 @@ pre{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8fbc8f;whit
 
 <script type="module">
 import { GEMINI_API_KEY, GEMINI_API_URL } from './config.js';
-import { getTeam, recordLevelCompletion, recordClueEntry } from './firebase-config.js';
+import { getTeam, recordLevelCompletion, recordClueEntry, saveTeamEditedCode } from './firebase-config.js';
 
 const LEVEL_NUM   = 1;
 const LEVEL_IDX   = 0;  // 0-based for levelConfig access
@@ -263,11 +274,12 @@ window.onload = async () => {
     // Load level config
     levelCfg = (team.levelConfig && team.levelConfig[LEVEL_IDX]) || null;
     if (levelCfg && levelCfg.question) {
-      document.getElementById('code-panel').textContent = levelCfg.question;
+      const savedCode = team.progress && team.progress[`level${LEVEL_NUM}`] && team.progress[`level${LEVEL_NUM}`].editedCode;
+      document.getElementById('code-panel').value = savedCode || levelCfg.question;
       if (levelCfg.task) document.getElementById('intel-brief').textContent = levelCfg.task;
       buildSystemPrompt();
     } else {
-      document.getElementById('code-panel').textContent = '// No question configured yet.\n// Ask your organizer to set it up.';
+      document.getElementById('code-panel').value = '// No question configured yet.\n// Ask your organizer to set it up.';
       document.getElementById('no-cfg-notice').classList.add('show');
     }
   } catch(e) {
@@ -311,6 +323,8 @@ function buildSystemPrompt() {
 
 // —— STRING SIMILARITY (Levenshtein ratio) ——
 function similarity(a, b) {
+  a = String(a).toUpperCase();
+  b = String(b).toUpperCase();
   if (a === b) return 1.0;
   if (!a.length || !b.length) return 0.0;
   const m = a.length, n = b.length;
@@ -335,14 +349,15 @@ function addMsg(cls, txt) {
 }
 
 // ── GEMINI CALL ──
-async function callGemini(userMsg) {
-  const msgs = [...history, { role:'user', parts:[{text:userMsg}] }];
+async function callGemini(userMsg, isCompiler = false) {
+  const currentSys = isCompiler ? getCompilerSystemPrompt() : SYSTEM;
+  const msgs = isCompiler ? [{ role: 'user', parts: [{ text: userMsg }] }] : [...history, { role: 'user', parts: [{ text: userMsg }] }];
   try {
     const r = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        system_instruction:{ parts:[{text:SYSTEM}] },
+        system_instruction:{ parts:[{text:currentSys}] },
         contents: msgs
       })
     });
@@ -351,6 +366,70 @@ async function callGemini(userMsg) {
     return d.candidates?.[0]?.content?.parts?.[0]?.text || '[no response]';
   } catch(e) { return `[Connection lost — ${e.message}]`; }
 }
+
+function getCompilerSystemPrompt() {
+  return [
+    "You are a strict Java compiler and logic logic comparator.",
+    "=== YOUR TASK ===",
+    "1. You will receive the user's submitted Java code, followed by the reference 'Correct Code Logic'.",
+    "2. Compare them purely logically. Do NOT look for exact syntax matching, look for algorithmic and functional equivalence.",
+    "3. If the user's code structurally and logically solves the same problem as the reference code, respond EXACTLY with 'COMPILE_SUCCESS_LOGIC_MATCH'.",
+    "4. If there are syntax errors, or if the logic is incorrect, respond ONLY with the compilation errors or a succinct description of the logical flaw.",
+    "5. ABSOLUTE RULE: DO NOT provide corrections. DO NOT provide hints. DO NOT provide the correct code. DO NOT converse. ONLY output 'COMPILE_SUCCESS_LOGIC_MATCH' or the errors."
+  ].join("\\n");
+}
+
+let codeSaveTimer = null;
+document.getElementById('code-panel').addEventListener('input', (e) => {
+  clearTimeout(codeSaveTimer);
+  codeSaveTimer = setTimeout(async () => {
+    const teamId = sessionStorage.getItem('ch_team_id');
+    if (teamId) {
+      await saveTeamEditedCode(teamId, LEVEL_NUM, e.target.value);
+    }
+  }, 1500);
+});
+
+window.resetCode = async function() {
+  if (!confirm('Are you sure you want to reset your code to the original puzzle? This will overwrite your edits.')) return;
+  const original = levelCfg?.question || '';
+  document.getElementById('code-panel').value = original;
+  const teamId = sessionStorage.getItem('ch_team_id');
+  if (teamId) await saveTeamEditedCode(teamId, LEVEL_NUM, original);
+  addMsg('sys', '// Code reset to original state.');
+};
+
+window.compileCode = async function() {
+  if (loading || solved) return;
+  const userCode = document.getElementById('code-panel').value.trim();
+  if (!userCode || userCode.startsWith('// No question')) return;
+  
+  loading = true;
+  addMsg('me', '> Compiling Code...');
+  const ld = addMsg('loading', 'HEIST COMPILER checking logic...');
+  
+  const correctCode = levelCfg?.correctCode || '';
+  const prompt = `USER SUBMITTED CODE:\n${userCode}\n\nREFERENCE CORRECT CODE LOGIC:\n${correctCode}`;
+  
+  const reply = await callGemini(prompt, true);
+  ld.remove();
+  loading = false;
+  
+  if (reply.trim().includes('COMPILE_SUCCESS_LOGIC_MATCH')) {
+    addMsg('win', '✓ COMPILATION SUCCESS. Logic functionally matched reference.');
+    addMsg('sys', '=> Answer submission terminal UNLOCKED.');
+    const uInp = document.getElementById('userinput');
+    const uBtn = document.getElementById('btn-send');
+    uInp.disabled = false;
+    uBtn.disabled = false;
+    uBtn.style.opacity = '1';
+    uBtn.style.cursor = 'pointer';
+    uInp.placeholder = 'submit exact output of the mapped logic...';
+    uInp.focus();
+  } else {
+    addMsg('nx', 'COMPILATION/LOGIC ERROR:\n' + reply);
+  }
+};
 
 window.send = async function() {
   if (loading || solved) return;
