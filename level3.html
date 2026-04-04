@@ -106,8 +106,31 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
 .ks.prev-a{border-color:var(--amber);color:var(--amber);background:rgba(255,171,64,.08)}
 @keyframes kpop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1)}}
 </style>
+
+<style>
+.ch-logo-top-left, .ch-logo-top-right {
+    position: fixed;
+    top: 20px;
+    width: 60px;
+    height: auto;
+    z-index: 9999;
+    filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0.4));
+    opacity: 0.9;
+}
+.ch-logo-top-left { left: 20px; width: 70px; }
+.ch-logo-top-right { right: 20px; }
+@media (max-width: 600px) {
+    .ch-logo-top-left, .ch-logo-top-right { width: 45px; }
+    .ch-logo-top-left { width: 55px; }
+}
+</style>
+
 </head>
 <body>
+
+<img class="ch-logo-top-left" src="vigyan_logo.png" alt="Vigyan.IO Logo">
+<img class="ch-logo-top-right" src="a_logo.png" alt="A Logo">
+
 <div class="bg-grid"></div><div class="glow-orb"></div>
 <div id="locked-gate">
   <div class="gate-icon">🧬</div><div class="gate-title">ACCESS DENIED</div>
@@ -123,7 +146,7 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
 </div>
 <div class="main-wrap">
   <div class="topbar">
-    <div class="tb-logo">CODE HEIST</div>
+    <div class="tb-logo">CODE HEIST<br><span style="display:block; font-size:0.5em; line-height:1.2; margin-top:8px; font-weight:700; letter-spacing:4px;">VIGYAN.IO</span></div>
     <div class="tb-mission"><span class="live-dot"></span><span id="mission-label">MISSION ACTIVE — CLUE CHAIN</span></div>
     <div class="tb-level">LEVEL 3 OF 4</div>
   </div>
