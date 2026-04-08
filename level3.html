@@ -55,8 +55,9 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
 .code-scroll::-webkit-scrollbar{width:3px}.code-scroll::-webkit-scrollbar-thumb{background:var(--border)}
 .code-textarea{width:100%;flex:1;min-height:200px;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8fbc8f;resize:vertical}
 .code-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
-.btn-compile{background:rgba(0,230,118,.1);border:1px solid var(--green);color:var(--green);font-family:var(--head);font-size:10px;padding:6px 12px;border-radius:2px;cursor:pointer;letter-spacing:2px;transition:all .2s;}
 .btn-compile:hover{background:var(--green);color:var(--bg)}
+.btn-run{background:rgba(64,196,255,.1);border:1px solid var(--blue);color:var(--blue);font-family:var(--head);font-size:10px;padding:6px 12px;border-radius:2px;cursor:pointer;letter-spacing:2px;transition:all .2s;opacity:0.3;cursor:not-allowed}
+.btn-run:hover:not(:disabled){background:var(--blue);color:var(--bg)}
 .btn-reset{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:10px;padding:6px 12px;border-radius:2px;cursor:pointer;transition:all .2s;}
 .btn-reset:hover{border-color:var(--red);color:var(--red)}
 .hint-box{padding:12px 16px;border-top:1px solid rgba(100,255,218,.1);background:rgba(100,255,218,.01)}
@@ -173,7 +174,8 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
       <div class="code-scroll">
         <textarea id="code-panel" class="code-textarea" spellcheck="false">// Loading question…</textarea>
         <div class="code-actions">
-          <button class="btn-compile" onclick="compileCode()">▶ COMPILE & CHECK LOGIC</button>
+          <button class="btn-compile" id="btn-compile" onclick="compileCode()">▶ COMPILE & CHECK LOGIC</button>
+          <button class="btn-run" id="btn-run" onclick="runCode()" disabled>⚡ GET OUTPUT</button>
           <button class="btn-reset" onclick="resetCode()">↺ RESET CODE</button>
         </div>
       </div>
@@ -292,13 +294,28 @@ function similarity(a, b) {
 function skipIntro(){document.getElementById('intro-overlay').style.display='none';playIntro();}
 function playIntro(){INTRO.forEach((m,i)=>setTimeout(()=>addMsg(m.c,m.t),i*400));}
 function addMsg(cls,txt){const c=document.getElementById('chat'),d=document.createElement('div');d.className='msg '+cls;d.textContent=txt;c.appendChild(d);c.scrollTop=c.scrollHeight;return d;}
-async function callGemini(userMsg, isCompiler = false){
-  const currentSys = isCompiler ? getCompilerSystemPrompt() : SYSTEM;
-  const msgs=isCompiler ? [{role:'user',parts:[{text:userMsg}]}] : [...history,{role:'user',parts:[{text:userMsg}]}];
-  try{
-    const r=await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:currentSys}]},contents:msgs})});
-    const d=await r.json();if(d.error)return`[HEIST error: ${d.error.message}]`;return d.candidates?.[0]?.content?.parts?.[0]?.text||'[no response]';
-  }catch(e){return`[Connection lost — ${e.message}]`;}
+async function callGemini(userMsg, mode = 'judge') {
+  let currentSys = SYSTEM;
+  if (mode === 'compiler') currentSys = getCompilerSystemPrompt();
+  if (mode === 'executor') currentSys = getExecutorSystemPrompt();
+
+  const msgs = (mode === 'compiler' || mode === 'executor') 
+    ? [{ role: 'user', parts: [{ text: userMsg }] }] 
+    : [...history, { role: 'user', parts: [{ text: userMsg }] }];
+
+  try {
+    const r = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        system_instruction:{ parts:[{text:currentSys}] },
+        contents: msgs
+      })
+    });
+    const d = await r.json();
+    if (d.error) return `[HEIST error: ${d.error.message}]`;
+    return d.candidates?.[0]?.content?.parts?.[0]?.text || '[no response]';
+  } catch(e) { return `[Connection lost — ${e.message}]`; }
 }
 
 function getCompilerSystemPrompt() {
@@ -310,7 +327,20 @@ function getCompilerSystemPrompt() {
     "3. If the user's code structurally and logically solves the same problem as the reference code, respond EXACTLY with 'COMPILE_SUCCESS_LOGIC_MATCH'.",
     "4. If there are syntax errors, or if the logic is incorrect, respond ONLY with the compilation errors or a succinct description of the logical flaw.",
     "5. ABSOLUTE RULE: DO NOT provide corrections. DO NOT provide hints. DO NOT provide the correct code. DO NOT converse. ONLY output 'COMPILE_SUCCESS_LOGIC_MATCH' or the errors."
-  ].join("\\n");
+  ].join("\n");
+}
+
+function getExecutorSystemPrompt() {
+  return [
+    "You are a strict Java Runtime Environment.",
+    "=== YOUR TASK ===",
+    "1. You will receive Java code.",
+    "2. Simulate its execution exactly as a Java compiler and JVM would.",
+    "3. Output ONLY what would be printed to the console (System.out.print/println).",
+    "4. If the code has errors that prevent execution, describe them briefly.",
+    "5. ABSOLUTE RULE: DO NOT explain the code. DO NOT provide hints. DO NOT provide the 'correct' answer unless it is the literal result of the code provided.",
+    "6. If the code is incomplete or has placeholders like '____', the output should reflect exactly what happens when that code is compiled (likely a compilation error)."
+  ].join("\n");
 }
 
 let codeSaveTimer = null;
@@ -345,24 +375,45 @@ window.compileCode = async function() {
   const correctCode = levelCfg?.correctCode || '';
   const prompt = `USER SUBMITTED CODE:\n${userCode}\n\nREFERENCE CORRECT CODE LOGIC:\n${correctCode}`;
   
-  const reply = await callGemini(prompt, true);
+  const reply = await callGemini(prompt, 'compiler');
   ld.remove();
   loading = false;
   
   if (reply.trim().includes('COMPILE_SUCCESS_LOGIC_MATCH')) {
     addMsg('win', '✓ COMPILATION SUCCESS. Logic functionally matched reference.');
-    addMsg('sys', '=> Answer submission terminal UNLOCKED.');
-    const uInp = document.getElementById('userinput');
-    const uBtn = document.getElementById('btn-send');
-    uInp.disabled = false;
-    uBtn.disabled = false;
-    uBtn.style.opacity = '1';
-    uBtn.style.cursor = 'pointer';
-    uInp.placeholder = 'submit exact output of the mapped logic...';
-    uInp.focus();
+    addMsg('sys', '=> OUTPUT terminal UNLOCKED. Click "GET OUTPUT" to see result.');
+    const uRun = document.getElementById('btn-run');
+    uRun.disabled = false;
+    uRun.style.opacity = '1';
+    uRun.style.cursor = 'pointer';
   } else {
     addMsg('nx', 'COMPILATION/LOGIC ERROR:\n' + reply);
   }
+};
+
+window.runCode = async function() {
+  if (loading || solved) return;
+  const userCode = document.getElementById('code-panel').value.trim();
+  
+  loading = true;
+  addMsg('me', '> Executing Code...');
+  const ld = addMsg('loading', 'HEIST RUNTIME executing...');
+  
+  const reply = await callGemini(userCode, 'executor');
+  ld.remove();
+  loading = false;
+  
+  addMsg('win', 'RUNTIME OUTPUT:\n' + reply);
+  addMsg('sys', '=> Answer submission terminal UNLOCKED.');
+  
+  const uInp = document.getElementById('userinput');
+  const uBtn = document.getElementById('btn-send');
+  uInp.disabled = false;
+  uBtn.disabled = false;
+  uBtn.style.opacity = '1';
+  uBtn.style.cursor = 'pointer';
+  uInp.placeholder = 'submit exact output of the mapped logic...';
+  uInp.focus();
 };
 window.send=async function(){if(loading||solved)return;
   const inp=document.getElementById('userinput'),msg=inp.value.trim();if(!msg)return;
@@ -394,7 +445,7 @@ window.send=async function(){if(loading||solved)return;
 window.askHint = function() {
   addMsg('sys', '// HINTS DISABLED — Competition mode. Submit your answer.');
 };
-window.submitClue=async function(){if(clueOk)return;const entered=document.getElementById('clueinput').value.trim().toUpperCase();const correct=(levelCfg?.clueLetterCorrect||'').toUpperCase();const errEl=document.getElementById('clue-err');if(!entered){errEl.textContent='⚠ Enter the clue letter.';return;}if(!correct){errEl.textContent='⚠ Not configured — ask admin.';return;}if(entered===correct){clueOk=true;errEl.style.color='var(--teal)';errEl.textContent='✓ Clue verified! Final level unlocked.';document.getElementById('ks0').textContent=entered;document.getElementById('ks0').classList.add('got');sessionStorage.setItem('ch_l2_clue',entered);const teamId=sessionStorage.getItem('ch_team_id');if(teamId){await recordLevelCompletion(teamId,LEVEL_NUM);await recordClueEntry(teamId,LEVEL_NUM,entered);sessionStorage.setItem('ch_level',String(LEVEL_NUM+1));}setTimeout(()=>{window.location.href=NEXT_PAGE;},1800);}else{errEl.textContent='✖ Wrong clue. Try again.';document.getElementById('clueinput').value='';document.getElementById('clueinput').focus();}};
+window.submitClue=async function(){if(clueOk)return;const entered=document.getElementById('clueinput').value.trim().toUpperCase();const correct=(levelCfg?.clueLetterCorrect||'').toUpperCase();const errEl=document.getElementById('clue-err');if(!entered){errEl.textContent='⚠ Enter the clue letter.';return;}if(!correct){errEl.textContent='⚠ Not configured — ask admin.';return;}if(entered===correct){clueOk=true;errEl.style.color='var(--teal)';errEl.textContent='✓ Clue verified! Final level unlocked.';document.getElementById('ks0').textContent=entered;document.getElementById('ks0').classList.add('got');sessionStorage.setItem('ch_l3_clue',entered);const teamId=sessionStorage.getItem('ch_team_id');if(teamId){await recordLevelCompletion(teamId,LEVEL_NUM);await recordClueEntry(teamId,LEVEL_NUM,entered);sessionStorage.setItem('ch_level',String(LEVEL_NUM+1));}setTimeout(()=>{window.location.href=NEXT_PAGE;},1800);}else{errEl.textContent='✖ Wrong clue. Try again.';document.getElementById('clueinput').value='';document.getElementById('clueinput').focus();}};
 document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(document.activeElement.id==='clueinput')window.submitClue();else if(document.activeElement.id==='userinput')window.send();}});
 </script>
 </body>

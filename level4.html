@@ -404,7 +404,7 @@ window.checkAnswer = function() {
     const letter = levelCfg?.clueLetterCorrect || '?';
     document.getElementById('ks3').textContent = letter;
     document.getElementById('ks3').classList.add('got');
-    sessionStorage.setItem('ch_l3_clue', letter);
+    sessionStorage.setItem('ch_l4_clue', letter);
     document.getElementById('btnNext').classList.add('show');
     document.getElementById('btnSubmit').disabled = true;
     solved = true;
@@ -443,7 +443,6 @@ window.showWin = async function() {
   document.getElementById('win-key-word').textContent = `${k1} · ${k2} · ${k3} · ${k4}`;
 
   document.getElementById('winScreen').classList.add('show');
-  sessionStorage.clear();
 };
 
 // ── HINT ──
