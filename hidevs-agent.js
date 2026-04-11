@@ -9,7 +9,8 @@ import {
   LYZR_API_URL,
   LYZR_JUDGE_AGENT_ID,
   LYZR_COMPILER_AGENT_ID,
-  LYZR_EXECUTOR_AGENT_ID
+  LYZR_EXECUTOR_AGENT_ID,
+  ENKRYPT_API_KEY
 } from './config.js';
 
 /**
@@ -46,15 +47,16 @@ export async function callLyzrAgent(userMsg, mode = 'judge', sessionId, userId) 
     // Lyzr passes these through to the agent; keep empty for now
     system_prompt_variables: {},
     filter_variables: {},
-    features: []
+    features: ['injection_detection', 'jailbreak_detection', 'pii_filtering']
   };
 
   try {
     const res = await fetch(LYZR_API_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key':    LYZR_API_KEY
+        'Content-Type':      'application/json',
+        'x-api-key':         LYZR_API_KEY,
+        'X-Enkrypt-API-Key': ENKRYPT_API_KEY
       },
       body: JSON.stringify(payload)
     });
