@@ -283,10 +283,10 @@ pre{font-family:var(--mono);font-size:11px;line-height:1.75;color:#8fbc8f;white-
 </div>
 
 <script type="module">
-import { GEMINI_API_KEY, GEMINI_API_URL } from './config.js';
 import { getTeam, recordLevelCompletion } from './firebase-config.js';
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { db } from './firebase-config.js';
+import { callLyzrAgent, getSessionId } from './hidevs-agent.js';
 
 const LEVEL_NUM = 4;
 const LEVEL_IDX = 3;
@@ -445,22 +445,18 @@ window.showWin = async function() {
   document.getElementById('winScreen').classList.add('show');
 };
 
-// ── HINT ──
-async function callGemini(msg) {
+// ── HIDEVS INTELLIGENCE LAYER (hints only for Level 4) ──
+async function callAI(msg) {
+  const teamId = sessionStorage.getItem('ch_team_id') || 'anon';
+  const sessionId = getSessionId(teamId, '4-hint');
   const cs = levelCfg?.correctSynonyms || {};
-  const sys = `You are the CODE HEIST final guardian AI — sarcastic, cryptic, dramatic. Level 4: Java POLYMORPHISM. The correct synonyms are: decoder1="${cs.north||'?'}", decoder2="${cs.west||'?'}", decoder3="${cs.num25||'?'}". Give ONE indirect cryptic hint without revealing any synonym directly. Under 70 words. Stay in character.`;
-  try {
-    const r = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system_instruction:{parts:[{text:sys}]}, contents:[...hintHistory, {role:'user',parts:[{text:msg}]}] })
-    });
-    const d = await r.json();
-    return d.candidates?.[0]?.content?.parts?.[0]?.text || '[no response]';
-  } catch(e) { return `[Connection lost — ${e.message}]`; }
+  // Prefix with hint context so the Judge agent knows this is the Level 4 hint request
+  const contextMsg = `[LEVEL4-HINT] Correct synonyms: decoder1="${cs.north||'?'}", decoder2="${cs.west||'?'}", decoder3="${cs.num25||'?'}". Request: ${msg}`;
+  return await callLyzrAgent(contextMsg, 'judge', sessionId, teamId);
 }
 window.askHint = async function() {
   const ld = addHintMsg('load','Cracking final hint channel...');
-  const reply = await callGemini('Give me a hint.');
+  const reply = await callAI('Give me a hint.');
   ld.remove();
   addHintMsg('hint', reply);
   hintHistory.push({role:'user',parts:[{text:'Give me a hint.'}]},{role:'model',parts:[{text:reply}]});
