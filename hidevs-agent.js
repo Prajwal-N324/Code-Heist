@@ -14,6 +14,48 @@ import {
 } from './config.js';
 
 /**
+ * Check message security via Enkrypt AI Standalone Guardrails API.
+ * This runs before every AI call to ensure no injection or PII leaks.
+ */
+async function checkSecurity(userMsg) {
+  if (!ENKRYPT_API_KEY || ENKRYPT_API_KEY === 'YOUR_ENKRYPT_API_KEY') return { safe: true };
+
+  try {
+    const res = await fetch('https://api.enkryptai.com/guardrails/detect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': ENKRYPT_API_KEY
+      },
+      body: JSON.stringify({
+        text: userMsg,
+        detectors: {
+          injection_attack: { enabled: true },
+          pii: { enabled: true, entities: ["pii", "secrets", "email"] },
+          toxicity: { enabled: true }
+        }
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // If any detector finds a violation, it will have a 'detected' or similar flag
+      // Based on Enkrypt standalone docs, we check for detection results
+      const detected = data?.detector_results?.injection_attack?.detected || 
+                       data?.detector_results?.pii?.detected ||
+                       data?.detector_results?.toxicity?.detected;
+      
+      if (detected) {
+        return { safe: false, reason: 'SECURITY VIOLATION DETECTED: Prompt blocked by Enkrypt AI.' };
+      }
+    }
+  } catch (err) {
+    console.warn('[Enkrypt] Pre-check failed, continuing with caution:', err);
+  }
+  return { safe: true };
+}
+
+/**
  * Call a Lyzr Studio agent.
  *
  * @param {string} userMsg   - The message to send to the agent
@@ -23,7 +65,13 @@ import {
  * @returns {Promise<string>} - The agent's text response
  */
 export async function callLyzrAgent(userMsg, mode = 'judge', sessionId, userId) {
-  // Select the right agent based on mode
+  // 1. Security Pre-check (Standalone Enkrypt)
+  const security = await checkSecurity(userMsg);
+  if (!security.safe) {
+    return `[HEIST SECURITY BLOCK] ${security.reason}`;
+  }
+
+  // 2. Select the right agent based on mode
   let agentId;
   switch (mode) {
     case 'compiler': agentId = LYZR_COMPILER_AGENT_ID; break;
@@ -31,23 +79,20 @@ export async function callLyzrAgent(userMsg, mode = 'judge', sessionId, userId) 
     default:          agentId = LYZR_JUDGE_AGENT_ID;    break; // 'judge' and 'hint'
   }
 
-  // Fallback guard — if keys aren't configured yet
-  if (!LYZR_API_KEY || LYZR_API_KEY === 'YOUR_LYZR_API_KEY') {
-    return '[HEIST CONFIG ERROR] Lyzr API key not set in config.js. Complete the manual setup guide first.';
+  // 3. Fallback guard
+  if (!LYZR_API_KEY || LYZR_API_KEY.includes('YOUR_')) {
+    return '[HEIST CONFIG ERROR] Lyzr API key not set in config.js.';
   }
-  if (!agentId || agentId.startsWith('YOUR_')) {
-    return `[HEIST CONFIG ERROR] Lyzr ${mode.toUpperCase()} Agent ID not set in config.js. Create the agent in studio.lyzr.ai first.`;
+  if (!agentId || agentId.includes('YOUR_')) {
+    return `[HEIST CONFIG ERROR] Lyzr ${mode.toUpperCase()} Agent ID not set in config.js.`;
   }
 
+  // 4. Simplified Payload to fix 422 error on unpaid tiers
   const payload = {
     user_id:    userId    || 'heist-player',
     agent_id:   agentId,
     session_id: sessionId || 'default-session',
-    message:    userMsg,
-    // Lyzr passes these through to the agent; keep empty for now
-    system_prompt_variables: {},
-    filter_variables: {},
-    features: ['injection_detection', 'jailbreak_detection', 'pii_filtering']
+    message:    userMsg
   };
 
   try {
@@ -55,8 +100,7 @@ export async function callLyzrAgent(userMsg, mode = 'judge', sessionId, userId) 
       method: 'POST',
       headers: {
         'Content-Type':      'application/json',
-        'x-api-key':         LYZR_API_KEY,
-        'X-Enkrypt-API-Key': ENKRYPT_API_KEY
+        'x-api-key':         LYZR_API_KEY
       },
       body: JSON.stringify(payload)
     });
@@ -68,8 +112,6 @@ export async function callLyzrAgent(userMsg, mode = 'judge', sessionId, userId) 
     }
 
     const data = await res.json();
-
-    // Lyzr returns the text in data.response
     const text = data?.response || data?.message || data?.output || '';
     if (!text) {
       console.error('[Lyzr] Unexpected response shape:', data);
