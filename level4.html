@@ -141,6 +141,37 @@ pre{font-family:var(--mono);font-size:11px;line-height:1.75;color:#8fbc8f;white-
     filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0.4));
     opacity: 0.9;
 }
+.tb-nav { display: flex; gap: 10px; align-items: center; }
+.nav-btn {
+    background: rgba(0, 230, 118, 0.05);
+    border: 1px solid rgba(0, 230, 118, 0.2);
+    color: var(--muted2);
+    font-family: var(--head);
+    font-size: 10px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    text-decoration: none;
+    pointer-events: none;
+    opacity: 0.5;
+}
+.nav-btn.active {
+    background: rgba(0, 230, 118, 0.1);
+    border-color: var(--green);
+    color: var(--green);
+    opacity: 1;
+    pointer-events: all;
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+}
+.nav-btn.back {
+    border-color: var(--muted);
+    color: var(--muted2);
+    opacity: 0.8;
+    pointer-events: all;
+}
+.nav-btn:hover { background: rgba(0, 230, 118, 0.15); transform: translateY(-1px); }
 @media (max-width: 600px) {
     .ch-logo-top-right { width: 60px; top: 10px; right: 10px; }
 }
@@ -198,6 +229,9 @@ pre{font-family:var(--mono);font-size:11px;line-height:1.75;color:#8fbc8f;white-
   <div class="topbar">
     <div class="tb-logo">CODE HEIST<br><span style="display:block; font-size:0.5em; line-height:1.2; margin-top:8px; font-weight:700; letter-spacing:4px;">VIGYAN.IO</span></div>
     <div class="tb-mission"><span class="live-dot"></span><span id="mission-label">⚠ FINAL GUARDIAN — BREACH IN PROGRESS</span></div>
+    <div class="tb-nav">
+      <a href="level3.html" class="nav-btn back">← BACK</a>
+    </div>
     <div class="tb-level">LEVEL 4 OF 4 — FINAL</div>
   </div>
   <div class="level-banner">
@@ -269,9 +303,9 @@ pre{font-family:var(--mono);font-size:11px;line-height:1.75;color:#8fbc8f;white-
     <div class="bot-lv">Level <span>4</span> of 4 — Polymorphism · Synonym Lock · FINAL</div>
     <div class="key-preview">
       <span class="key-label">KEY:</span>
-      <div class="ks prev-g" id="ks-p1">_</div>
-      <div class="ks prev-a" id="ks-p2">_</div>
-      <div class="ks prev-t" id="ks-p3">_</div>
+      <div class="ks" id="ks0">_</div>
+      <div class="ks" id="ks1">_</div>
+      <div class="ks" id="ks2">_</div>
       <div class="ks" id="ks3">_</div>
     </div>
     <div class="bot-hint">Match each synonym to the correct decoder · complete the CODE HEIST →</div>
@@ -400,7 +434,7 @@ window.checkAnswer = function() {
     const letter = levelCfg?.clueLetterCorrect || '?';
     document.getElementById('ks3').textContent = letter;
     document.getElementById('ks3').classList.add('got');
-    sessionStorage.setItem('ch_l4_clue', letter);
+    localStorage.setItem('ch_clue_3', letter);
     document.getElementById('btnNext').classList.add('show');
     document.getElementById('btnSubmit').disabled = true;
     solved = true;
@@ -467,6 +501,32 @@ function addHintMsg(cls, txt) {
 function skipIntro() { document.getElementById('intro-overlay').style.display='none'; }
 function replay() { sessionStorage.clear(); window.location.href = 'login.html'; }
 document.addEventListener('keydown', e => { if(e.key==='Enter') window.checkAnswer(); });
+// ── PERSISTENCE & RESTORE ──
+function loadClues() {
+  const currentClue = localStorage.getItem('ch_clue_' + LEVEL_IDX);
+  if (currentClue) {
+    solved = true;
+    document.getElementById('ks3').textContent = currentClue;
+    document.getElementById('ks3').classList.add('got');
+    document.getElementById('btnNext').classList.add('show');
+    document.getElementById('btnSubmit').disabled = true;
+    
+    // Restore inputs if they match correct synonyms
+    const cs = levelCfg?.correctSynonyms || {};
+    if (cs.north) document.getElementById('syn1').value = cs.north;
+    if (cs.west)  document.getElementById('syn2').value = cs.west;
+    if (cs.num25) document.getElementById('syn3').value = cs.num25;
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const val = localStorage.getItem('ch_clue_' + i);
+    if (val) {
+      const el = document.getElementById('ks' + i);
+      if (el) { el.textContent = val; el.classList.add('got'); }
+    }
+  }
+}
+window.addEventListener('DOMContentLoaded', loadClues);
 </script>
 </body>
 </html>

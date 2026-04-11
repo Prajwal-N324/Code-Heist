@@ -131,6 +131,37 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
     filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0.4));
     opacity: 0.9;
 }
+.tb-nav { display: flex; gap: 10px; align-items: center; }
+.nav-btn {
+    background: rgba(0, 230, 118, 0.05);
+    border: 1px solid rgba(0, 230, 118, 0.2);
+    color: var(--muted2);
+    font-family: var(--head);
+    font-size: 10px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    text-decoration: none;
+    pointer-events: none;
+    opacity: 0.5;
+}
+.nav-btn.active {
+    background: rgba(0, 230, 118, 0.1);
+    border-color: var(--green);
+    color: var(--green);
+    opacity: 1;
+    pointer-events: all;
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+}
+.nav-btn.back {
+    border-color: var(--muted);
+    color: var(--muted2);
+    opacity: 0.8;
+    pointer-events: all;
+}
+.nav-btn:hover { background: rgba(0, 230, 118, 0.15); transform: translateY(-1px); }
 @media (max-width: 600px) {
     .ch-logo-top-right { width: 60px; top: 10px; right: 10px; }
 }
@@ -178,6 +209,9 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
   <div class="topbar">
     <div class="tb-logo">CODE HEIST<br><span style="display:block; font-size:0.5em; line-height:1.2; margin-top:8px; font-weight:700; letter-spacing:4px;">VIGYAN.IO</span></div>
     <div class="tb-mission"><span class="live-dot"></span><span id="mission-label">MISSION ACTIVE — THE PRIVATE VAULT</span></div>
+    <div class="tb-nav">
+      <a href="level2.html" class="nav-btn next" id="nav-next">NEXT →</a>
+    </div>
     <div class="tb-level">LEVEL 1 OF 4</div>
   </div>
   <div class="level-banner">
@@ -252,7 +286,9 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
     <div class="key-preview">
       <span class="key-label">KEY:</span>
       <div class="ks" id="ks0">_</div>
-      <div class="ks">_</div><div class="ks">_</div><div class="ks">_</div>
+      <div class="ks" id="ks1">_</div>
+      <div class="ks" id="ks2">_</div>
+      <div class="ks" id="ks3">_</div>
     </div>
     <div class="bot-hint">Find the public gateway to the private method</div>
   </div>
@@ -451,8 +487,16 @@ window.submitClue = async function() {
     errEl.textContent = '';
     errEl.style.color = 'var(--green)';
     errEl.textContent = '✓ Clue verified! Level unlocked.';
-    document.getElementById('ks0').textContent = entered;
-    document.getElementById('ks0').classList.add('got');
+    
+    // Update local UI and Persist across sessions
+    const el = document.getElementById('ks' + LEVEL_IDX);
+    if (el) {
+      el.textContent = entered;
+      el.classList.add('got');
+    }
+    localStorage.setItem('ch_clue_' + LEVEL_IDX, entered);
+    document.getElementById('nav-next').classList.add('active');
+
     const teamId = sessionStorage.getItem('ch_team_id');
     if (teamId) {
       await recordLevelCompletion(teamId, LEVEL_NUM);
@@ -473,6 +517,31 @@ document.addEventListener('keydown', e => {
     else if (document.activeElement.id === 'userinput') window.send();
   }
 });
+// ── PERSISTENCE & RESTORE ──
+function loadClues() {
+  const currentClue = localStorage.getItem('ch_clue_' + LEVEL_IDX);
+  if (currentClue) {
+    solved = true;
+    clueOk = true;
+    document.getElementById('clue-entry-box').classList.add('show');
+    document.getElementById('nav-next').classList.add('active');
+    document.getElementById('clueinput').value = currentClue;
+    document.getElementById('clueinput').disabled = true;
+    document.getElementById('location-reveal').textContent = levelCfg?.location || 'Location revealed.';
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const val = localStorage.getItem('ch_clue_' + i);
+    if (val) {
+      const el = document.getElementById('ks' + i);
+      if (el) {
+        el.textContent = val;
+        el.classList.add('got');
+      }
+    }
+  }
+}
+window.addEventListener('DOMContentLoaded', loadClues);
 </script>
 </body>
 </html>
