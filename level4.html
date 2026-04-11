@@ -498,8 +498,8 @@ function addHintMsg(cls, txt) {
   log.appendChild(d); log.scrollTop = log.scrollHeight;
   return d;
 }
-function skipIntro() { document.getElementById('intro-overlay').style.display='none'; }
-function replay() { sessionStorage.clear(); window.location.href = 'login.html'; }
+window.skipIntro = function() { document.getElementById('intro-overlay').style.display='none'; };
+window.replay = function() { sessionStorage.clear(); window.location.href = 'login.html'; };
 document.addEventListener('keydown', e => { if(e.key==='Enter') window.checkAnswer(); });
 // ── PERSISTENCE & RESTORE ──
 function loadClues() {

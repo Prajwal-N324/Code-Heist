@@ -362,8 +362,8 @@ function similarity(a, b) {
   return 1 - dp[m][n] / Math.max(m, n);
 }
 
-function skipIntro() { document.getElementById('intro-overlay').style.display='none'; playIntro(); }
-function playIntro() { INTRO.forEach((m,i) => setTimeout(() => addMsg(m.c, m.t), i*400)); }
+window.skipIntro = function() { document.getElementById('intro-overlay').style.display='none'; window.playIntro(); };
+window.playIntro = function() { INTRO.forEach((m,i) => setTimeout(() => addMsg(m.c, m.t), i*400)); };
 
 function addMsg(cls, txt) {
   const c = document.getElementById('chat');

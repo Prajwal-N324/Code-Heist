@@ -301,8 +301,8 @@ function similarity(a, b) {
   for (let i=1;i<=m;i++) for (let j=1;j<=n;j++) dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
   return 1 - dp[m][n]/Math.max(m,n);
 }
-function skipIntro(){document.getElementById('intro-overlay').style.display='none';playIntro();}
-function playIntro(){INTRO.forEach((m,i)=>setTimeout(()=>addMsg(m.c,m.t),i*400));}
+window.skipIntro = function() { document.getElementById('intro-overlay').style.display='none'; window.playIntro(); };
+window.playIntro = function() { INTRO.forEach((m,i) => setTimeout(() => addMsg(m.c, m.t), i*400)); };
 function addMsg(cls,txt){const c=document.getElementById('chat'),d=document.createElement('div');d.className='msg '+cls;d.textContent=txt;c.appendChild(d);c.scrollTop=c.scrollHeight;return d;}
 
 let codeSaveTimer = null;
