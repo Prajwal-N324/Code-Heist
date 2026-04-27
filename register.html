@@ -363,17 +363,18 @@ body::after{content:'';position:fixed;inset:0;z-index:19;pointer-events:none;bac
 </div>
 
 <script type="module">
-import { registerTeam, teamNameExists, generateUniqueAccessCode, suggestAlternateTeamName } from './firebase-config.js';
+import { registerTeam, teamNameExists, generateUniqueAccessCode, suggestAlternateTeamName,
+         getNextAvailableSlot, markSlotAsAssigned } from './firebase-config.js';
 
 // Show/hide agent cards based on team size
 window.updateAgentCards = function() {
   const size = parseInt(document.getElementById('team-size').value) || 2;
   [3,4].forEach(n => {
-    document.getElementById(`agent-card-${n}`).style.display = n <= size ? 'block' : 'none';
+    const card = document.getElementById(`agent-card-${n}`);
+    if (card) card.style.display = n <= size ? 'block' : 'none';
   });
 };
 
-// Auto-generate team number (TEAM-XX format based on timestamp)
 function generateTeamNumber() {
   return 'TEAM-' + String(Date.now()).slice(-4);
 }
@@ -388,23 +389,26 @@ function clearErrs() {
 
 // Debounced name check
 let nameCheckTimer = null;
-document.getElementById('team-name').addEventListener('input', () => {
-  clearTimeout(nameCheckTimer);
-  nameCheckTimer = setTimeout(async () => {
-    const name = document.getElementById('team-name').value.trim();
-    if (!name) return;
-    const warn = document.getElementById('name-warn');
-    const taken = await teamNameExists(name);
-    if (taken) {
-      const alt = await suggestAlternateTeamName(name);
-      warn.textContent = `⚠ Name already taken. Suggested: "${alt}"`;
-      warn.classList.add('show');
-    } else {
-      warn.classList.remove('show');
-      warn.textContent = '';
-    }
-  }, 500);
-});
+const teamNameEl = document.getElementById('team-name');
+if (teamNameEl) {
+  teamNameEl.addEventListener('input', () => {
+    clearTimeout(nameCheckTimer);
+    nameCheckTimer = setTimeout(async () => {
+      const name = teamNameEl.value.trim();
+      if (!name) return;
+      const warn = document.getElementById('name-warn');
+      const taken = await teamNameExists(name);
+      if (taken) {
+        const alt = await suggestAlternateTeamName(name);
+        warn.textContent = `⚠ Name already taken. Suggested: "${alt}"`;
+        warn.classList.add('show');
+      } else {
+        warn.classList.remove('show');
+        warn.textContent = '';
+      }
+    }, 500);
+  });
+}
 
 window.submitRegistration = async function() {
   clearErrs();
@@ -435,7 +439,6 @@ window.submitRegistration = async function() {
   btn.querySelector('span').textContent = 'ENLISTING SQUAD…';
 
   try {
-    // Check name uniqueness
     const taken = await teamNameExists(teamName);
     if (taken) {
       const alt = await suggestAlternateTeamName(teamName);
@@ -447,14 +450,28 @@ window.submitRegistration = async function() {
 
     const accessCode  = await generateUniqueAccessCode();
     const teamNumber  = generateTeamNumber();
+    
+    // FETCH SLOT
+    const slot = await getNextAvailableSlot();
+    const levelConfig = slot ? slot.levelConfig : {};
 
-    await registerTeam({ teamName, teamNumber, accessCode, department, year, teamSize, agents });
+    const teamId = await registerTeam({ 
+      teamName, teamNumber, accessCode, department, year, teamSize, agents,
+      levelConfig 
+    });
+
+    if (slot) {
+      await markSlotAsAssigned(slot.id, teamName);
+    }
 
     // Show success overlay
     document.getElementById('display-code').textContent = accessCode;
-    document.getElementById('display-team-num').textContent = teamNumber;
+    document.getElementById('display-team-num').textContent = slot ? `Assigned to: ${slot.slotName}` : teamNumber;
     document.getElementById('success-overlay').classList.add('show');
-    setTimeout(() => document.getElementById('success-bar-fill').classList.add('run'), 100);
+    setTimeout(() => {
+      const bar = document.getElementById('success-bar-fill');
+      if (bar) bar.classList.add('run');
+    }, 100);
 
   } catch(e) {
     setErr('err-global', '✖ Registration failed: ' + e.message);
