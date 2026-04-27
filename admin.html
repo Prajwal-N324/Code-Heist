@@ -438,8 +438,8 @@ async function loadTeams() {
       </div>
     `).join('');
   } catch(e) {
-    bar.innerHTML = `<div class="lb-empty">Error loading teams.</div>`;
-    console.error(e);
+    bar.innerHTML = `<div class="lb-empty" style="color:var(--red)">Error loading teams: ${e.message}</div>`;
+    console.error("Load teams failed:", e);
   }
 }
 
@@ -450,7 +450,7 @@ async function loadSlots() {
   try {
     allSlots = await getAllSlots();
     if (!allSlots.length) {
-      bar.innerHTML = '<div style="color:var(--muted);font-size:12px">No slots created.</div>';
+      bar.innerHTML = '<div style="color:var(--muted);font-size:12px">No slots created. Click "+ Add New Slot" to begin.</div>';
       return;
     }
     bar.innerHTML = allSlots.map(s => `
@@ -460,8 +460,8 @@ async function loadSlots() {
       </div>
     `).join('');
   } catch(e) {
-    bar.innerHTML = `<div class="lb-empty">Error loading slots.</div>`;
-    console.error(e);
+    bar.innerHTML = `<div class="lb-empty" style="color:var(--red)">Error loading slots: ${e.message}</div>`;
+    console.error("Load slots failed:", e);
   }
 }
 

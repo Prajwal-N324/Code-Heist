@@ -105,8 +105,9 @@ export async function saveTeamLevelConfig(teamId, levelNum, config) {
 
 /** Get all pre-configured slots ordered by slot number/order */
 export async function getAllSlots() {
-  const snap = await getDocs(query(collection(db, 'preconfigured_slots'), orderBy('order', 'asc')));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const snap = await getDocs(collection(db, 'preconfigured_slots'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                  .sort((a,b) => (a.order || 0) - (b.order || 0));
 }
 
 /** Create a new pre-configured slot */
@@ -137,13 +138,13 @@ export async function deleteSlot(slotId) {
 export async function getNextAvailableSlot() {
   const q = query(
     collection(db, 'preconfigured_slots'),
-    where('isAssigned', '==', false),
-    orderBy('order', 'asc')
+    where('isAssigned', '==', false)
   );
   const snap = await getDocs(q);
   if (snap.empty) return null;
-  const docData = snap.docs[0];
-  return { id: docData.id, ...docData.data() };
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                        .sort((a,b) => (a.order || 0) - (b.order || 0));
+  return docs[0];
 }
 
 /** Mark a slot as assigned to a team */
@@ -157,8 +158,13 @@ export async function markSlotAsAssigned(slotId, teamId) {
 
 /** Get all teams (for admin) */
 export async function getAllTeams() {
-  const snap = await getDocs(query(collection(db, 'teams'), orderBy('registeredAt', 'asc')));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const snap = await getDocs(collection(db, 'teams'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                  .sort((a,b) => {
+                    const timeA = a.registeredAt?.toMillis ? a.registeredAt.toMillis() : (a.registeredAt || 0);
+                    const timeB = b.registeredAt?.toMillis ? b.registeredAt.toMillis() : (b.registeredAt || 0);
+                    return timeA - timeB;
+                  });
 }
 
 /** Record level completion timestamp */
