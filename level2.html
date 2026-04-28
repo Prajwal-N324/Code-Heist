@@ -275,11 +275,20 @@ const INTRO = [
 window.onload = async () => {
   const teamId = sessionStorage.getItem('ch_team_id');
   if (!teamId) { document.getElementById('locked-gate').style.display='flex'; document.getElementById('intro-overlay').style.display='none'; return; }
-  const currentLevel = parseInt(sessionStorage.getItem('ch_level') || '1');
-  if (currentLevel < LEVEL_NUM) { document.getElementById('locked-gate').style.display='flex'; document.getElementById('intro-overlay').style.display='none'; return; }
   try {
     const team = await getTeam(teamId);
     if (!team) throw new Error('no team');
+    
+    // Sync current level from Firestore to sessionStorage
+    const currentLevel = team.currentLevel || 1;
+    sessionStorage.setItem('ch_level', String(currentLevel));
+    
+    if (currentLevel < LEVEL_NUM) {
+      document.getElementById('locked-gate').style.display='flex';
+      document.getElementById('intro-overlay').style.display='none';
+      return;
+    }
+
     document.getElementById('mission-label').textContent = `${team.teamName} · LEVEL 2 — JUMBLED CODE BOX`;
     const l1letter = sessionStorage.getItem('ch_l1_clue') || '';
     if (l1letter) { document.getElementById('ks-prev').textContent = l1letter; }
@@ -405,7 +414,7 @@ window.send=async function(){
   const correct=(levelCfg?.answer||'').trim();
   const sim=similarity(msg,correct);
   let tier;
-  if(msg===correct)           tier='EXACT';
+  if(msg.toUpperCase() === correct.toUpperCase()) tier='EXACT';
   else if(sim>=0.80)          tier='CLOSE';
   else if(msg.trim().length<2) tier='OTHER';
   else                        tier='WRONG';

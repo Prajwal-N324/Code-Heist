@@ -693,7 +693,7 @@ function buildSystemPrompt(n, lv) {
   const names = ["ABSTRACTION", "ENCAPSULATION", "INHERITANCE", "POLYMORPHISM"];
   const rev = ["VAULT BREACHED", "ENCRYPTED", "CHAIN DECODED", "LOCK BROKEN"];
   const loc = lv.location || 'the next location';
-  return `You are the JUDGE. Level ${n+1}: ${names[n]}.\nRules: No help. Exact check.\nMatch: '${rev[n]}. Proceed to: ${loc}' + ANSWER_CORRECT.\nClose: cryptic hint.\nWrong: dismissal.`;
+  return `You are the JUDGE. Level ${n+1}: ${names[n]}.\nRules: No help. Case-insensitive check.\nMatch: '${rev[n]}. Proceed to: ${loc}' + ANSWER_CORRECT.\nClose: cryptic hint.\nWrong: dismissal.`;
 }
 
 window.forceUnlockLevel = async function(num) {
@@ -719,17 +719,66 @@ window.resetLevel = function(n) {
 window.loadLeaderboard = async function() {
   const c = document.getElementById('leaderboard-container');
   if (!c) return;
+  c.innerHTML = '<div class="lb-empty">// Loading Leaderboard...</div>';
   try {
     const teams = await getAllTeams();
-    if (!teams.length) { c.innerHTML = '<div class="lb-empty">No teams.</div>'; return; }
-    const sorted = teams.sort((a,b) => (b.currentLevel||1) - (a.currentLevel||1));
+    if (!teams.length) { c.innerHTML = '<div class="lb-empty">// No teams registered yet</div>'; return; }
+
+    // Filter to show only teams that have made some progress or sort them
+    const sorted = teams.sort((a,b) => {
+      const aL = a.currentLevel || 1;
+      const bL = b.currentLevel || 1;
+      if (aL !== bL) return bL - aL;
+      // If same level, compare completion time of latest level if available
+      return 0;
+    });
+
+    const fmtTime = (prog, lvlIdx) => {
+      const levelKey = `level${lvlIdx + 1}`;
+      const entry = prog && prog[levelKey];
+      if (!entry || !entry.completedAt) return '—';
+      const d = entry.completedAt.toDate ? entry.completedAt.toDate() : new Date(entry.completedAt);
+      return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    };
+
+    const rankClass = i => i===0 ? 'gold' : i===1 ? 'silver' : i===2 ? 'bronze' : '';
+
     c.innerHTML = `<table class="lb-table">
-      <thead><tr><th>#</th><th>TEAM</th><th>LEVEL</th><th>L1</th><th>L2</th><th>L3</th><th>L4</th></tr></thead>
-      <tbody>${sorted.map((t,i) => `
-        <tr><td>${i+1}</td><td>${t.teamName||t.id}</td><td>L${t.currentLevel||1}</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
-      `).join('')}</tbody>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>TEAM</th>
+          <th class="hide-mobile">MEMBERS</th>
+          <th>LEVEL</th>
+          <th>L1</th>
+          <th>L2</th>
+          <th>L3</th>
+          <th>L4</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${sorted.map((t, i) => {
+          const members = (t.agents || []).map(a => a.name).join(', ') || '—';
+          const currentLvl = t.currentLevel || 1;
+          const statusClass = currentLvl > 4 ? 'done' : 'prog';
+          return `
+          <tr>
+            <td class="lb-rank ${rankClass(i)}">${i+1}</td>
+            <td class="lb-team">${t.teamName || t.id}</td>
+            <td class="lb-name hide-mobile">${members}</td>
+            <td class="lb-level"><span class="${statusClass}">L${Math.min(currentLvl, 4)}</span></td>
+            <td class="lb-time">${fmtTime(t.progress, 0)}</td>
+            <td class="lb-time">${fmtTime(t.progress, 1)}</td>
+            <td class="lb-time">${fmtTime(t.progress, 2)}</td>
+            <td class="lb-time">${fmtTime(t.progress, 3)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
     </table>`;
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    console.error("Leaderboard error:", e);
+    c.innerHTML = `<div class="lb-empty" style="color:var(--red)">// Error loading leaderboard: ${e.message}</div>`;
+  }
 };
 
 window.showToast = function(msg, err=false) {

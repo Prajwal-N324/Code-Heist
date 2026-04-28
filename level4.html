@@ -327,12 +327,20 @@ let solved = false, levelCfg = null, hintHistory = [], teamId = null;
 window.onload = async () => {
   teamId = sessionStorage.getItem('ch_team_id');
   if (!teamId) { document.getElementById('locked-gate').style.display='flex'; document.getElementById('intro-overlay').style.display='none'; return; }
-  const currentLevel = parseInt(sessionStorage.getItem('ch_level') || '1');
-  if (currentLevel < LEVEL_NUM) { document.getElementById('locked-gate').style.display='flex'; document.getElementById('intro-overlay').style.display='none'; return; }
-
   try {
     const team = await getTeam(teamId);
     if (!team) throw new Error('no team');
+
+    // Sync current level from Firestore to sessionStorage
+    const currentLevel = team.currentLevel || 1;
+    sessionStorage.setItem('ch_level', String(currentLevel));
+
+    if (currentLevel < LEVEL_NUM) {
+      document.getElementById('locked-gate').style.display='flex';
+      document.getElementById('intro-overlay').style.display='none';
+      return;
+    }
+
     document.getElementById('mission-label').textContent = `${team.teamName} · FINAL GUARDIAN — BREACH IN PROGRESS`;
 
     // Show collected keys from previous levels

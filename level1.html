@@ -451,7 +451,7 @@ window.send = async function() {
   const correct = (levelCfg?.answer || '').trim();
   const sim     = similarity(msg, correct);
   let tier;
-  if (msg === correct)            tier = 'EXACT';
+  if (msg.toUpperCase() === correct.toUpperCase()) tier = 'EXACT';
   else if (sim >= 0.80)           tier = 'CLOSE';
   else if (msg.trim().length < 2) tier = 'OTHER';
   else                            tier = 'WRONG';

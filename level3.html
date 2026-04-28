@@ -261,11 +261,20 @@ const INTRO=[{c:"sys",t:"─── CODE HEIST LEVEL 3 INITIALISED — CLUE CHAIN
 window.onload = async () => {
   const teamId=sessionStorage.getItem('ch_team_id');
   if(!teamId){document.getElementById('locked-gate').style.display='flex';document.getElementById('intro-overlay').style.display='none';return;}
-  const currentLevel=parseInt(sessionStorage.getItem('ch_level')||'1');
-  if(currentLevel<LEVEL_NUM){document.getElementById('locked-gate').style.display='flex';document.getElementById('intro-overlay').style.display='none';return;}
   try {
     const team=await getTeam(teamId);
     if(!team) throw new Error('no team');
+
+    // Sync current level from Firestore to sessionStorage
+    const currentLevel = team.currentLevel || 1;
+    sessionStorage.setItem('ch_level', String(currentLevel));
+
+    if(currentLevel < LEVEL_NUM){
+      document.getElementById('locked-gate').style.display='flex';
+      document.getElementById('intro-overlay').style.display='none';
+      return;
+    }
+
     document.getElementById('mission-label').textContent=`${team.teamName} · LEVEL 3 — CLUE CHAIN`;
     // Show collected keys
     const p1=sessionStorage.getItem('ch_l1_clue')||''; const p2=sessionStorage.getItem('ch_l2_clue')||'';
@@ -276,9 +285,9 @@ window.onload = async () => {
       const savedCode = team.progress && team.progress[`level${LEVEL_NUM}`] && team.progress[`level${LEVEL_NUM}`].editedCode;
       document.getElementById('code-panel').value=savedCode || levelCfg.question; 
       if(levelCfg.task) document.getElementById('intel-brief').textContent=levelCfg.task;
+    } else {
+      document.getElementById('code-panel').value='// No question configured.\n// Ask your organizer.';
     }
-    }
-    else document.getElementById('code-panel').value='// No question configured.\n// Ask your organizer.';
   } catch(e) { console.error(e); }
   setTimeout(() => { document.getElementById('intro-overlay').classList.add('fade-out'); setTimeout(() => { document.getElementById('intro-overlay').style.display='none'; playIntro(); }, 1000); }, 3500);
 };
@@ -386,7 +395,7 @@ window.send=async function(){if(loading||solved)return;
   const correct=(levelCfg?.answer||'').trim();
   const sim=similarity(msg,correct);
   let tier;
-  if(msg===correct)            tier='EXACT';
+  if(msg.toUpperCase() === correct.toUpperCase()) tier='EXACT';
   else if(sim>=0.80)           tier='CLOSE';
   else if(msg.trim().length<2) tier='OTHER';
   else                         tier='WRONG';
