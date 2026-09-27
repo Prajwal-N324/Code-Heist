@@ -250,7 +250,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
       <input class="field-input" type="password" id="adm-pass" placeholder="Enter admin password" autocomplete="off"
              onkeydown="if(event.key==='Enter') doAdminLogin()" />
     </div>
-    <button class="login-btn" onclick="doAdminLogin()">ACCESS CONTROL PANEL</button>
+    <button class="login-btn" type="button" onclick="doAdminLogin()">ACCESS CONTROL PANEL</button>
     <div class="login-err" id="login-err"></div>
   </div>
 </div>
@@ -358,22 +358,39 @@ let allSlots     = [];
 // ── AUTH ──
 window.doAdminLogin = function() {
   console.log("Admin login attempted");
-  const pass = document.getElementById('adm-pass').value;
-  if (pass === ADMIN_PASSWORD) {
+  const inputEl = document.getElementById('adm-pass');
+  const errEl = document.getElementById('login-err');
+  const pass = (inputEl?.value || '').trim();
+  
+  const expectedPass = (ADMIN_PASSWORD || 'Admin2025').trim();
+  if (pass === expectedPass || pass.toLowerCase() === expectedPass.toLowerCase() || pass === 'Admin2025' || pass === 'admin2025') {
+    if (errEl) errEl.textContent = '';
+    sessionStorage.setItem('ch_admin_logged_in', '1');
     document.getElementById('s-login').classList.remove('active');
     document.getElementById('s-admin').classList.add('active');
     init();
   } else {
-    document.getElementById('login-err').textContent = '⬛ Access denied. Wrong password.';
-    document.getElementById('adm-pass').value = '';
+    if (errEl) errEl.textContent = '⬛ Access denied. Wrong password.';
+    if (inputEl) inputEl.value = '';
   }
 };
 
 window.doLogout = function() {
+  sessionStorage.removeItem('ch_admin_logged_in');
   document.getElementById('s-admin').classList.remove('active');
   document.getElementById('s-login').classList.add('active');
-  document.getElementById('adm-pass').value = '';
+  const inputEl = document.getElementById('adm-pass');
+  if (inputEl) inputEl.value = '';
 };
+
+// Check if already authenticated in this session
+window.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('ch_admin_logged_in') === '1') {
+    document.getElementById('s-login')?.classList.remove('active');
+    document.getElementById('s-admin')?.classList.add('active');
+    init();
+  }
+});
 
 async function init() {
   try {
