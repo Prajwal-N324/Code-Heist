@@ -456,11 +456,16 @@ window.send = async function() {
   else if (msg.trim().length < 2) tier = 'OTHER';
   else                            tier = 'WRONG';
 
-  const taggedMsg = `[TIER:${tier}] ${msg}`;
-  const reply = await callAI(taggedMsg, 'judge');
+  const prompt = `[USER_SUBMISSION: "${msg}"] [VALIDATION_TIER: ${tier}] 
+Strict Instruction: 
+- If TIER is EXACT, you MUST respond with the success message and include "ANSWER_CORRECT".
+- If TIER is CLOSE, give a cryptic hint but DO NOT say "ANSWER_CORRECT".
+- If TIER is WRONG, dismiss the answer and DO NOT say "ANSWER_CORRECT".`;
+  
+  const reply = await callAI(prompt, 'judge');
   ld.remove(); loading = false;
 
-  history.push({role:'user', parts:[{text:taggedMsg}]});
+  history.push({role:'user', parts:[{text:prompt}]});
   addMsg('nx', reply);
   history.push({role:'model', parts:[{text:reply}]});
 

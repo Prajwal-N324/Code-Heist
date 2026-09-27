@@ -55,6 +55,7 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;bac
 .code-scroll::-webkit-scrollbar{width:3px}.code-scroll::-webkit-scrollbar-thumb{background:var(--border)}
 .code-textarea{width:100%;flex:1;min-height:200px;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#8fbc8f;resize:vertical}
 .code-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.btn-compile{background:rgba(0,230,118,.1);border:1px solid var(--green);color:var(--green);font-family:var(--head);font-size:10px;padding:6px 12px;border-radius:2px;cursor:pointer;letter-spacing:2px;transition:all .2s;}
 .btn-compile:hover{background:var(--green);color:var(--bg)}
 .btn-run{background:rgba(64,196,255,.1);border:1px solid var(--blue);color:var(--blue);font-family:var(--head);font-size:10px;padding:6px 12px;border-radius:2px;cursor:pointer;letter-spacing:2px;transition:all .2s;opacity:0.3;cursor:not-allowed}
 .btn-run:hover:not(:disabled){background:var(--blue);color:var(--bg)}
@@ -400,10 +401,15 @@ window.send=async function(){if(loading||solved)return;
   else if(msg.trim().length<2) tier='OTHER';
   else                         tier='WRONG';
 
-  const taggedMsg=`[TIER:${tier}] ${msg}`;
-  const reply=await callAI(taggedMsg, 'judge');
+  const prompt = `[USER_SUBMISSION: "${msg}"] [VALIDATION_TIER: ${tier}] 
+Strict Instruction: 
+- If TIER is EXACT, you MUST respond with the success message and include "ANSWER_CORRECT".
+- If TIER is CLOSE, give a cryptic hint but DO NOT say "ANSWER_CORRECT".
+- If TIER is WRONG, dismiss the answer and DO NOT say "ANSWER_CORRECT".`;
+  
+  const reply=await callAI(prompt, 'judge');
   ld.remove();loading=false;
-  history.push({role:'user',parts:[{text:taggedMsg}]});
+  history.push({role:'user',parts:[{text:prompt}]});
   addMsg('nx',reply);
   history.push({role:'model',parts:[{text:reply}]});
   if(reply.includes('ANSWER_CORRECT')&&!solved){
